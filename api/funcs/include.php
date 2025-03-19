@@ -17,7 +17,7 @@ include_once $GLOBALS["InstallPath"]."/funcs/CFPropertyList/CFType.php";
 include_once $GLOBALS["InstallPath"]."/funcs/CFPropertyList/CFUid.php";
 include_once $GLOBALS["InstallPath"]."/funcs/CFPropertyList/IOException.php";
 include_once $GLOBALS["InstallPath"]."/funcs/CFPropertyList/PListException.php";
-include_once $GLOBALS["InstallPath"]."funcs/CFPropertyList/CFTypeDetector.php";
+include_once $GLOBALS["InstallPath"]."/funcs/CFPropertyList/CFTypeDetector.php";
 include_once $GLOBALS["InstallPath"]."/funcs/CFPropertyList/CFArray.php";
 include_once $GLOBALS["InstallPath"]."/funcs/CFPropertyList/CFBinaryPropertyList.php";
 include_once $GLOBALS["InstallPath"]."/funcs/CFPropertyList/CFBoolean.php";
