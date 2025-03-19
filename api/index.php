@@ -82,6 +82,8 @@ $endpoints = [
     "v1/device/{String}/installProfile{POST}" => "device_installProfile",
     // /v1/device/${device.udid}/removeProfile
     "v1/device/{String}/removeProfile{POST}" => "device_removeProfile",
+    // Core_reAddDevice
+    "v1/device/{String}/reAdd" => "Core_reAddDevice",
 
     "v1/system/mdm/enroll" => "system_mdm_enroll",
     "v1/system/apps/download/{String}" => "Apps_Createmanifest",
@@ -90,6 +92,8 @@ $endpoints = [
     "v1/app/upload" => "Apps_upload",
     "v1/app/images/{String}" => "Apps_getImage",
     "v1/apps/device/push" => "Apps_pushToDevices",
+    // Apps_GetNewInfofromIPA
+    "v1/apps/{String}/newinfo" => "Apps_GetNewInfofromIPA",
     //
 
     // v1/profiles/get
@@ -109,6 +113,7 @@ $endpoints = [
     "v1/profiles/{String}/download" => "Profiles_download",
     // Profiles_downloadJson
     "v1/profiles/{String}/downloadJson" => "Profiles_downloadJson",
+    "v1/device/{String}/name" => "device_getname",
 
     // EventQueue_list
     "v1/EventQueue/list" => "EventQueue_list",
@@ -199,7 +204,8 @@ $excludedEndpoints = [
     "v1/system/mdm/enroll",
     "v1/system/apps/download/{String}",
     "v1/system/mdm/config",
-    "v1/system/mdm/TDSLocationTracking/postendpoint"
+    "v1/system/mdm/TDSLocationTracking/postendpoint",
+    "v1/device/{String}/name"
 ];
 
 // Check if the matched endpoint is not in the excluded list

@@ -195,7 +195,7 @@ function DeviceDetails() {
                     {activeTab === 'Profiles' && deviceData.profiles && deviceData.profiles.length > 0 && (
                         <ManagedProfiles ManagedApplications={deviceData.profiles} device={deviceData} />
                     )}
-                    {activeTab === 'Location' && deviceData["net_thomasdye_TDS-LocationTracking"].location && (
+                    {activeTab === 'Location' && deviceData["net_thomasdye_TDS-LocationTracking"] && (
                         <LocationTab location={deviceData["net_thomasdye_TDS-LocationTracking"].location} />
                     )}
                 </TabContent>

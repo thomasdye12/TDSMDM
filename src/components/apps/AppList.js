@@ -243,6 +243,7 @@ function AppList() {
                         <TableHeader>Version</TableHeader>
                         <TableHeader>Bundle ID</TableHeader>
                         <TableHeader>Uploaded</TableHeader>
+                        <TableHeader>ExpirationDate</TableHeader>
                         <TableHeader>Action</TableHeader>
                     </tr>
                 </thead>

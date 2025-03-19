@@ -10,7 +10,7 @@ function Core_getDevices()
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-        CURLOPT_URL => $GLOBALS["host"] . '/v1/devices',
+        CURLOPT_URL => $GLOBALS["BackEndHost"] . '/v1/devices',
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_ENCODING => '',
         CURLOPT_MAXREDIRS => 10,
@@ -122,4 +122,15 @@ function device_removeProfile($udid, $postdata)
 {
     $profile = $postdata["profileId"];
     Profiles_removeFromDevices(array("deviceUdids" => array($udid), "profileId" => $profile));
+}
+// device_getname
+
+function device_getname($udid)
+{
+    global $MDMdevices;
+    $cursor = $MDMdevices->find(["udid" => $udid], ["projection" => ["DeviceName" => 1]]);
+    foreach ($cursor as $document) {
+        return array("DeviceName" => $document["DeviceName"],"state" => true);
+    }
+    return array("state" => false);
 }

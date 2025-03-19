@@ -135,3 +135,28 @@ function Core_removeDevice($udid)
     $MDMEventQueue->deleteMany(["deviceUdid" => $udid]);
     
 }
+
+//  handle add of the device that already exists
+function Core_reAddDevice($udid)
+{
+    global $MDMdevices;
+    global $MDMEventQueue;
+    global $MDMApps;
+    global $MDMProfiles;
+    // remvoe the device id from any apps, profiles
+    // $allapps =  $MDMApps->find();   
+    //  get all apps that have a device array containing the udid
+    $allapps =  $MDMApps->find(["devices" => $udid]);
+    //  get all profiles that have a device array containing the udid
+    foreach ($allapps as $app) {
+        Apps_pushToDevices(array("deviceUdids" => array($udid), "appId" => (string)$app["_id"]), array());
+        sleep(2);
+    }
+     
+    $allprofiles =  $MDMProfiles->find(["devices" => $udid]);
+    foreach ($allprofiles as $profile) {
+        // array("deviceUdids" => array($device), "profileId" => "");
+        Profiles_pushToDevices(array("deviceUdids" => array($udid), "profileId" => $profile["PayloadUUID"]));
+        sleep(2);
+    }    
+}

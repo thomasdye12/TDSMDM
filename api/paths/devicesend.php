@@ -44,7 +44,7 @@ function Core_sendDeviceCommandV2($data)
     }
     // Set up the endpoint and credentials
     $endpoint = '/v1/commands';
-    $url = $GLOBALS["host"] . $endpoint;
+    $url = $GLOBALS["BackEndHost"] . $endpoint;
 
 
 
@@ -89,7 +89,7 @@ function Core_sendDeviceCommandV2RawData($udid, $commandUUID, $data)
     }
     // Set up the endpoint and credentials
     $endpoint = '/v1/commands/' . $udid;
-    $url = $GLOBALS["host"] . $endpoint;
+    $url = $GLOBALS["BackEndHost"] . $endpoint;
 
 
 

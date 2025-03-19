@@ -5,11 +5,13 @@
 
 function Core_incomingevent($postData)
 {
+    include_once "/Server/app/support/Grafana_Loki.php";
     //log to /Library/Server/Web/Data/Sites/Homeserver/home-serviceslist/api/logs
     $log = "/Library/Server/Web/Data/Sites/server.thomasdye/TDSMDM/api/logs/incomingevent.log";
     $date = date('Y-m-d H:i:s');
     $data = json_encode($postData);
-    file_put_contents($log, $date . " " . $data . "\n", FILE_APPEND);
+    Grafana_Loki_Log("MDM","RAWRES",$data );
+    // file_put_contents($log, $date . " " . $data . "\n", FILE_APPEND);
     // check if the event is a device enrolled
 
     Core_incomingevent_SwitchTopic($postData);
@@ -72,6 +74,13 @@ function Core_incomingevent_mdmConnect($postData)
         if (isset($array["SecurityInfo"])) {
             Core_SecurityInformation($device, $array["SecurityInfo"]);
         }
+        // Latitude Longitude , both are set 
+        if (isset($array["Latitude"]) && isset($array["Longitude"])) {
+            Core_updateKeys($device["udid"], "net_thomasdye_TDS-LocationTracking.location.Location.latitude", $array["Latitude"]);
+            Core_updateKeys($device["udid"], "net_thomasdye_TDS-LocationTracking.location.Location.longitude", $array["Longitude"]);
+            Core_updateKeys($device["udid"], "net_thomasdye_TDS-LocationTracking.location.timeint", time());
+            Core_updateKeys($device["udid"], "net_thomasdye_TDS-LocationTracking.location.Time.LocationTime", time());
+        }
     }
 }
 // Core_incomingevent_mdmCheckOut
@@ -86,7 +95,7 @@ function Core_incomingevent_mdmCheckOut($postData)
         $array = $plist->toArray();
         if (isset($array["MessageType"]) && $array["MessageType"] == "CheckOut") {
             Core_updateKeys($device["udid"], "enrollment_status", false);
-            Core_removeDevice($device["udid"]);
+            // Core_removeDevice($device["udid"]);
         }
     }
 }
@@ -100,6 +109,8 @@ function Core_incomingevent_mdmAuthenticate($postData)
         $plist = new CFPropertyList();
         $plist->parse($base64decode);
         $array = $plist->toArray();
+        // if the device
+
         Core_updateKeys($device["udid"], "enrollment_status", true);
         $keys = ["BuildVersion", "Challenge", "DeviceName", "Model", "ModelName", "OSVersion", "ProductName", "SerialNumber", "Topic"];
         foreach ($keys as $key) {
@@ -109,6 +120,7 @@ function Core_incomingevent_mdmAuthenticate($postData)
         }
         $queryStrings = "UDID,Languages,Locales,DeviceID,OrganizationInfo,LastCloudBackupDate,AwaitingConfiguration,MDMOptions,iTunesStoreAccountIsActive,iTunesStoreAccountHash,DeviceName,OSVersion,BuildVersion,ModelName,Model,ProductName,SerialNumber,DeviceCapacity,AvailableDeviceCapacity,BatteryLevel,CellularTechnology,ICCID,BluetoothMAC,WiFiMAC,EthernetMACs,CurrentCarrierNetwork,SubscriberCarrierNetwork,CurrentMCC,CurrentMNC,SubscriberMCC,SubscriberMNC,SIMMCC,SIMMNC,SIMCarrierNetwork,CarrierSettingsVersion,PhoneNumber,DataRoamingEnabled,VoiceRoamingEnabled,PersonalHotspotEnabled,IsRoaming,IMEI,MEID,ModemFirmwareVersion,IsSupervised,IsDeviceLocatorServiceEnabled,IsActivationLockEnabled,IsDoNotDisturbInEffect,EASDeviceIdentifier,IsCloudBackupEnabled,OSUpdateSettings,LocalHostName,HostName,CatalogURL,IsDefaultCatalog,PreviousScanDate,PreviousScanResult,PerformPeriodicCheck, AutomaticCheckEnabled,BackgroundDownloadEnabled,AutomaticAppInstallationEnabled,AutomaticOSInstallationEnabled,AutomaticSecurityUpdatesEnabled,OSUpdateSettings,LocalHostName, HostName,IsMultiUser,IsMDMLostModeEnabled, MaximumResidentUsers, PushToken, DiagnosticSubmissionEnabled, AppAnalyticsEnabled, IsNetworkTethered, ServiceSubscriptions";
         Core_sendDeviceCommand($postData["checkin_event"]["udid"], "DeviceInformation",  $queryStrings);
+        Core_reAddDevice($device["udid"]);
     }
 }
 

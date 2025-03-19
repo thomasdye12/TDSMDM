@@ -96,7 +96,7 @@ function convertXMLToArray($xmlString) {
 
 
 // Profiles_pushToDevices
-
+// array("deviceUdids" => array($device), "profileId" => "");
 function Profiles_pushToDevices($postdata){
     global $MDMProfiles;
     $profile = $MDMProfiles->findOne(["PayloadUUID" => $postdata["profileId"]]);
