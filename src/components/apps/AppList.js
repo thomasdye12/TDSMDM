@@ -167,12 +167,17 @@ function AppList() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showDetails, setShowDetails] = useState(false);
     const [selectedApp, setSelectedApp] = useState(null);
     const [selectedDevices, setSelectedDevices] = useState([]);
 
     const handlePushApp = (app) => {
         setSelectedApp(app);
         setIsModalOpen(true);
+    };
+    const handleShowAppDetailed = (app) => {
+        setSelectedApp(app);
+        setShowDetails(true);
     };
 
     const handleDeviceChange = (deviceUdid) => {
@@ -244,7 +249,9 @@ function AppList() {
                         <TableHeader>Bundle ID</TableHeader>
                         <TableHeader>Uploaded</TableHeader>
                         <TableHeader>ExpirationDate</TableHeader>
+                        <TableHeader>Platform</TableHeader>
                         <TableHeader>Action</TableHeader>
+                        <TableHeader></TableHeader>
                     </tr>
                 </thead>
                 <tbody>
@@ -256,6 +263,7 @@ function AppList() {
                                 app={app}
                                 handlePushApp={handlePushApp}
                                 showpush={true}
+                                handleShowAppDetailed={handleShowAppDetailed}
                             />
                         );
                 
@@ -293,6 +301,30 @@ function AppList() {
                     <ConfirmButton onClick={handleConfirmPush}>Push App</ConfirmButton>
                 </ModalContent>
             </ModalOverlay>
+
+                  {/* Modal goes here */}
+          {showDetails && (
+        <ModalOverlay isOpen={true}>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>App Details</ModalTitle>
+              <CloseButton onClick={() => setShowDetails(false)}>&times;</CloseButton>
+            </ModalHeader>
+            <div style={{ maxHeight: '900px', overflowY: 'auto', fontSize: '14px' }}>
+              <pre>{JSON.stringify({
+                Name: selectedApp.name,
+                BundleID: selectedApp.CFBundleIdentifier,
+                Version: selectedApp.CFBundleShortVersionString,
+                DTPlatformName: selectedApp.infolist?.DTPlatformName,
+                DTPlatformVersion: selectedApp.infolist?.DTPlatformVersion,
+                Team: selectedApp.mobileprovision?.TeamName,
+                AppID: selectedApp.mobileprovision?.Entitlements?.['application-identifier'],
+                Entitlements: selectedApp.mobileprovision?.Entitlements,
+              }, null, 2)}</pre>
+            </div>
+          </ModalContent>
+        </ModalOverlay>
+      )}
         </AppListContainer>
     );
 }

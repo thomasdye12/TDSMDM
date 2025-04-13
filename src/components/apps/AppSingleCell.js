@@ -73,8 +73,10 @@ const getExpirationColor = (expirationTimestamp) => {
   return 'transparent'; // Default
 };
 
-const AppSingleCell = ({ app, showpush, handlePushApp, ShowRemoveButton, handleRemoveApp }) => {
+const AppSingleCell = ({ app, showpush, handlePushApp, ShowRemoveButton, handleRemoveApp, handleShowAppDetailed}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+
   const navigate = useNavigate();
   
   const { data: iconUrl } = useQuery(['app-icon', app.icon], async () => {
@@ -85,30 +87,36 @@ const AppSingleCell = ({ app, showpush, handlePushApp, ShowRemoveButton, handleR
   });
 
   return (
-      <>
+    <>
       <tr key={app.CFBundleIdentifier} style={{ backgroundColor: getExpirationColor(app.mobileprovision?.ExpirationDate) }}>
+        <TableCell>
+          <AppIcon src={iconUrl} />
+        </TableCell>
+        <TableCell>{app.CFBundleDisplayName || app.name}</TableCell>
+        <TableCell>{app.CFBundleShortVersionString || app.version}</TableCell>
+        <TableCell>{app.CFBundleIdentifier || app.bundleId}</TableCell>
+        <TableCell>{new Date(app.uploaded * 1000).toLocaleString()}</TableCell>
+        <TableCell>{app.infolist?.DTPlatformName || '—'}</TableCell>
+        <TableCell>{app.mobileprovision?.ExpirationDate ? new Date(app.mobileprovision.ExpirationDate * 1000).toLocaleString() : 'N/A'}</TableCell>
+  
+        {showpush && (
           <TableCell>
-              <AppIcon src={iconUrl} />
+            <ActionButton onClick={() => handlePushApp(app)}>Push App</ActionButton>
           </TableCell>
-          <TableCell>{app.CFBundleDisplayName || app.name}</TableCell>
-          <TableCell>{app.CFBundleShortVersionString || app.version}</TableCell>
-          <TableCell>{app.CFBundleIdentifier || app.bundleId}</TableCell>
-          <TableCell>{new Date(app.uploaded * 1000).toLocaleString()}</TableCell>
-          <TableCell>{app.mobileprovision?.ExpirationDate ? new Date(app.mobileprovision.ExpirationDate * 1000).toLocaleString() : 'N/A'}</TableCell>
-
-          {showpush && (
-              <TableCell>
-                  <ActionButton onClick={() => handlePushApp(app)}>Push App</ActionButton>
-              </TableCell>
-          )}
-          {ShowRemoveButton && (
-              <TableCell>
-                  <RemoveButton onClick={() => handleRemoveApp(app)}>Remove App</RemoveButton>
-              </TableCell>
-          )}
+        )}
+        {ShowRemoveButton && (
+          <TableCell>
+            <RemoveButton onClick={() => handleRemoveApp(app)}>Remove App</RemoveButton>
+          </TableCell>
+        )}
+        <TableCell>
+          <ActionButton onClick={() => handleShowAppDetailed(app)}>More</ActionButton>
+        </TableCell>
       </tr>
-      </>
+  
+    </>
   );
+  
 };
 
 export default AppSingleCell;
