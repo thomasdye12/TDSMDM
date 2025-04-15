@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate  } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import Header from './components/Header'; // Assuming you renamed Sidebar to Header
 import DeviceList from './components/DeviceList';
@@ -70,7 +70,9 @@ function MainContent() {
 
     checkAccess();
   }, []);
-
+  if (location.pathname === '/') {
+    return <Navigate to="/devices" replace />;
+  }
   return (
     <MainContentContainer>
       {location.pathname.startsWith('/devices') && access.devices && (

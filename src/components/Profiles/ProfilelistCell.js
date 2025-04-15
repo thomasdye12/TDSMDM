@@ -101,6 +101,9 @@ const ProfileTableRow = ({ profile, onPushProfile, onRemoveProfile, hidePushButt
             <ActionButton onClick={() => setShowModal(true)}>
               Show Details
             </ActionButton>
+            <ActionButton onClick={() => window.open(`/TDSapi/v1/profiles/${profile.PayloadUUID}/download`)}>
+               Download
+          </ActionButton>
           </ButtonGroup>
         </TableCell>
       </tr>
