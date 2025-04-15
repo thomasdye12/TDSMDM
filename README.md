@@ -4,6 +4,10 @@ This is an MDM application that allows IOS devices to comunicate with the server
 
 This has a custom front end writen in React, with the backend written in PHP
 
+Here is a video i made on my youtube talking about apples old MDM and why i built my own 
+
+https://youtu.be/AhiLQ0AxoR0
+
 ## Info
 
 this project uses the react front end, along with a PHP backend to handle the communication. The actual device  data is handled by micro MDM, this just uses its api to communicate with the api.
