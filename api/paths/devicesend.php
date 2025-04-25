@@ -156,6 +156,16 @@ function sendDeviceCommand($uid, $postdata)
         }
         return array("status" => "failed", "error" => "No target device");
     }
+    if ($command == "ManagedApplicationList") {
+                $data = array(
+                    "udid" => $uid,
+                    "request_type" => "ManagedApplicationList",
+                );
+                return Core_sendDeviceCommandV2($data);
+
+
+        // return array("status" => "failed", "error" => "No target device");
+    }
     // UnlockToken
     // ClearPasscode
     if ($command == "ClearPasscode") {

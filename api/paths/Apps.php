@@ -27,33 +27,39 @@ function Apps_get()
 function Apps_upload($otherinfo, $userinfo)
 {
     global $MDMApps;
-    // check for a file on the php uplaod 
+
     if (isset($_FILES['app'])) {
         $file = $_FILES['app'];
         $app = Apps_ProcessUpload($file, $userinfo);
         if (isset($app["error"])) {
             return ["error" => $app["error"]];
         }
+
         $plistinfo = Apps_processInfoPlist($app["info"]);
-        // trim the $global["appDir"] from the path
         $app["path"] = str_replace($GLOBALS["appDir"] . "/", "", $app["path"]);
-        // get the icon
         $app["icon"] = Apps_getIcon($app["unzipped"], $plistinfo["CFBundleIdentifier"]);
         $app["CFBundleDisplayName"] = $plistinfo["CFBundleDisplayName"] ?? "";
         $app["CFBundleIdentifier"] = $plistinfo["CFBundleIdentifier"] ?? "";
         $app["CFBundleShortVersionString"] = $plistinfo["CFBundleShortVersionString"];
         $app["infolist"] = $plistinfo;
+
         if ($app["mobileprovision"] != false) {
             $app["mobileprovision"] = Apps_processMobileProvision($app["mobileprovision"]);
         }
+
         Apps_removeUnzipped($app["unzipped"]);
         unset($app["unzipped"]);
         unset($app["info"]);
-        //  use the bundle id to check if the app is already in the db, if it is update it, if not insert it
+
+        // Add customVersion (timestamp)
+        $app["customVersion"] = time();
+
+        // Check if the app already exists in the DB
         $appdb = $MDMApps->findOne(["CFBundleIdentifier" => $app["CFBundleIdentifier"]]);
+
         if ($appdb) {
             $app["_id"] = $appdb["_id"];
-            // Determine which fields have changed
+
             $updateFields = [];
             foreach ($app as $key => $value) {
                 if (!isset($appdb[$key]) || $appdb[$key] !== $value) {
@@ -64,13 +70,13 @@ function Apps_upload($otherinfo, $userinfo)
             if (!empty($updateFields)) {
                 $MDMApps->updateOne(
                     ["_id" => $app["_id"]],
-                    ['$set' => $updateFields] // Only update changed fields
+                    ['$set' => $updateFields]
                 );
             }
         } else {
             $MDMApps->insertOne($app);
         }
-        // push the new app to all the devices that that app is assigned to
+
         if (!isset($appdb["devices"])) {
             $appdb["devices"] = [];
         }
@@ -78,10 +84,13 @@ function Apps_upload($otherinfo, $userinfo)
         foreach ($appdb["devices"] as $device) {
             Apps_pushToDevice($app["_id"], $app, $device);
         }
+
         return $app;
     }
+
     return ["error" => "No file uploaded"];
 }
+
 
 // function to handle the core upload and proecesing of the App file .ipa, 
 // we will need to proecess it, unzip it, and then get the info.plist file from the payload folder then we can use that for the info we need about the file for the server to 
@@ -407,6 +416,7 @@ function  Apps_pushToDevices($postdata, $userinfo)
     $app = $MDMApps->findOne(["_id" => new MongoDB\BSON\ObjectId($postdata["appId"])]);
     if ($app) {
         foreach ($postdata["deviceUdids"] as $device) {
+            APNS_SendAPPNotifciation($device,$app);
             $deviceid = $device;
             $result = Apps_pushToDevice($postdata["appId"], $app, $deviceid);
             $MDMApps->updateOne(["_id" => new MongoDB\BSON\ObjectId($postdata["appId"])], ['$addToSet' => ["devices" => $deviceid]]);
@@ -419,6 +429,7 @@ function  Apps_pushToDevices($postdata, $userinfo)
     }
     return ["error" => "App not found"];
 }
+
 
 // function to actually push the app to the device
 function Apps_pushToDevice($appid, $app, $deviceid)

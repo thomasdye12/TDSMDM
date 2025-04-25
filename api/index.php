@@ -125,8 +125,12 @@ $endpoints = [
     "v1/system/mdm/TDSLocationTracking/postendpoint" => "TDSLocationTracking",
     "v1/system/mdm/TDSLocationTracking/RequestUpdate" => "TDSLocationTracking_RequestLocationUpdate",
     "v1/system/mapping/token" => "TDSLocationTracking_MapToken",
+    "v1/system/mdm/APNS/{String}/token" => "MDM_APNSToken",
 
-
+    "v1/app/{String}/appsAvailable" => "App_Device_getAvailableApps",
+    //AppsInstalledOnDevice
+    "v1/app/{String}/AppsInstalledOnDevice" => "App_Device_AppsInstalledOnDevice",
+    "v1/app/{String}/device/getstate" => "App_Device_Device_getstate",
 
 
     // Auto enroll
@@ -205,6 +209,7 @@ $excludedEndpoints = [
     "v1/system/apps/download/{String}",
     "v1/system/mdm/config",
     "v1/system/mdm/TDSLocationTracking/postendpoint",
+    "v1/system/mdm/APNS/{String}/token",
     "v1/device/{String}/name"
 ];
 
