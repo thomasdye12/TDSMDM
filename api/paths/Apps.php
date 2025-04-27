@@ -434,6 +434,21 @@ function  Apps_pushToDevices($postdata, $userinfo)
 // function to actually push the app to the device
 function Apps_pushToDevice($appid, $app, $deviceid)
 {
+
+    // //  add a check if the device is a Mac, so we first remove the app from the device otherwise it will just add a copy of the app to the device
+    // global $MDMdevices;
+    // $cursor = $MDMdevices->findone(["udid" => $deviceid], ["projection" => ["DeviceName" => 1]]);
+    // if ($cursor) {
+    //     $device = $cursor;
+    //     if (isset($device["DeviceName"]) && strpos($device["DeviceName"], "Mac") !== false) {
+    //         // remove the app from the device
+    //         $command = array("udid" => $deviceid, "request_type" => "RemoveApplication", "Identifier" => $app["CFBundleIdentifier"]);
+    //         Core_sendDeviceCommandV2($command);
+    //     }
+    // }
+
+
+
     $url = "https://".$GLOBALS["hostName"]."/TDSapi/v1/system/apps/download/" . $appid;
     $data = array("udid" => $deviceid, "request_type" => "InstallApplication", "manifest_url" => $url, "management_flags" => 1, "change_management_state" => "Managed", "iOSApp" => true);
     //     <plist version="1.0">
