@@ -36,6 +36,9 @@ function App_Device_getAvailableApps($deviceID) {
     foreach ($output as &$managedApp) {
         foreach ($installedApps as $installedApp) {
             if ($installedApp["Identifier"] === $managedApp["BundleIdentifier"]) {
+                $installedApp["BundleSize"] = isset($installedApp["BundleSize"]) ? $installedApp["BundleSize"] : 0;
+                // DynamicSize
+                $installedApp["DynamicSize"] = isset($installedApp["DynamicSize"]) ? $installedApp["DynamicSize"] : 0;
                 $managedApp["installed"] = true;
                 $managedApp["installed_info"] = $installedApp;
                 break;

@@ -38,7 +38,7 @@ function EventQueue_CreateEvent($udid,$data) {
         "udid" => $udid,
         "statekey" => 0
     );
-    echo "inserting event";
+    // echo "inserting event";
     $MDMEventQueue->insertOne($eventlog);
 }
 

@@ -80,9 +80,11 @@ function Apps_upload($otherinfo, $userinfo)
         if (!isset($appdb["devices"])) {
             $appdb["devices"] = [];
         }
-
+        $appid = (string)$app["_id"];
         foreach ($appdb["devices"] as $device) {
-            Apps_pushToDevice($app["_id"], $app, $device);
+
+
+            Apps_pushToDevice($appid, $app, $device);
         }
 
         return $app;
@@ -292,6 +294,10 @@ function Apps_getIcon($path, $bundle)
             $appfiles = scandir($appdir);
             foreach ($appfiles as $appfile) {
                 if (strpos($appfile, "AppIcon60x60@2x.png") !== false) {
+                    $info = $appdir . "/" . $appfile;
+                    return Apps_moveIcon($info, $bundle);
+                }
+                if (strpos($appfile, "60x60@2x.png") !== false) {
                     $info = $appdir . "/" . $appfile;
                     return Apps_moveIcon($info, $bundle);
                 }

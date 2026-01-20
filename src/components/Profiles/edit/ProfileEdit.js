@@ -11,6 +11,9 @@ import CertificateSettings from './CertificateSettings';
 import WifiSettings from './WifiSettings'; // import the new component
 import DomainSettings from './DomainSettings'; // import the new component
 import LoginWindowSettings from './LoginWindowSettings'; // import the new component
+import SharedDeviceSettings from './SharedDeviceSettings'; // import the new component
+import RestrictionsSettings from './restrictionsSettings'; // import the new component
+import SingleAppModeSettings from './singleAppMode'; // import the new component
 
 const Container = styled.div`
   display: flex;
@@ -60,7 +63,16 @@ const ProfileEdit = () => {
          {activeSection === 'LoginWindow' && (
           <LoginWindowSettings settings={settings} setSettings={setSettings} />
         )}
-
+          {activeSection === 'SharedDeviceSettings' && (
+            <SharedDeviceSettings settings={settings} setSettings={setSettings} />
+          )}
+    {activeSection === 'RestrictionsSettings' && (
+          <RestrictionsSettings settings={settings} setSettings={setSettings} />
+        )}
+        {/* singleAppMode */}
+        {activeSection === 'SingleAppModeSettings' && (
+          <SingleAppModeSettings settings={settings} setSettings={setSettings} />
+        )}
         {/* Add other sections similarly */}
       </SettingsPanel>
       <SaveButton settings={settings} />

@@ -113,6 +113,8 @@ $endpoints = [
     "v1/profiles/{String}/download" => "Profiles_download",
     // Profiles_downloadJson
     "v1/profiles/{String}/downloadJson" => "Profiles_downloadJson",
+        // Profiles_downloadJson
+        "v1/profiles/{String}/downloadXML" => "Profiles_downloadXML",
     "v1/device/{String}/name" => "device_getname",
 
     // EventQueue_list

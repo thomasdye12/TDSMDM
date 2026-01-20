@@ -256,6 +256,33 @@ function Profiles_download($id) {
     return $profile;
 
 }
+
+// Profiles_download
+function Profiles_downloadXML($id) {
+    global $MDMProfiles;
+    $profile = $MDMProfiles->findOne(["PayloadUUID" => $id]);
+    if (!$profile) {
+        return ["error" => "Profile not found"];
+    }
+    if (isset($profile["contents"])) {
+    header('Content-Type: application/x-apple-aspen-config');
+    header('Content-Disposition: attachment; filename="' . $profile["PayloadDisplayName"] . '.mobileconfig"');
+    echo base64_decode($profile["contents"]);
+    exit;
+    }
+    //  if edit is set to true then we need to create the profile using the data in the db
+    if (!$profile["edit"]) {
+        return ["error" => "Profile is not editable, and there is no contents"];
+    }
+    $plist = new JsonToPlistConverter($profile);
+    // $plist->createPlist();
+    // header('Content-Type: application/x-apple-aspen-config');
+    echo $plist->createPlist();
+    exit;
+
+    return $profile;
+
+}
 // Profiles_download
 function Profiles_downloadJson($id) {
     global $MDMProfiles;

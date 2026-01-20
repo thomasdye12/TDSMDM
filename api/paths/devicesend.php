@@ -166,6 +166,17 @@ function sendDeviceCommand($uid, $postdata)
 
         // return array("status" => "failed", "error" => "No target device");
     }
+    if ($command == "ProvisioningProfileList") {
+        $data = array(
+            "udid" => $uid,
+            "request_type" => "ProvisioningProfileList",
+        );
+        return Core_sendDeviceCommandV2($data);
+    }
+
+
+// return array("status" => "failed", "error" => "No target device");
+
     // UnlockToken
     // ClearPasscode
     if ($command == "ClearPasscode") {

@@ -35,7 +35,6 @@ const SearchInput = styled.input`
 `;
 
 const DeviceItem = styled.li`
-  padding: 15px;
   margin-bottom: 10px;
   background-color: #ffffff;
   border-radius: 10px;
@@ -55,11 +54,25 @@ const DeviceItem = styled.li`
 `;
 
 const DeviceContainer = styled.div`
+ padding: 15px;  
   padding: 2px;
 //   border-left: 3px solid #007bff;
   display: flex;
   align-items: center;
+  background: ${({ supervised }) => supervised ? '#ececec' : 'white'};
 `;
+const SupervisedBadge = styled.div`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #333;
+  color: #fff;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+`;
+
 
 const DeviceInfo = styled.p`
   margin: 2px 0;
@@ -82,24 +95,37 @@ const Icon = styled.span`
 
 
 
+
+
+
 const Device = ({ device }) => {
   const iconClass = deviceIconName(device.ModelName);
 
   return (
-    <DeviceContainer>
-      <Icon className={iconClass}></Icon>
+    <DeviceContainer supervised={device.IsSupervised}>
+      {device.IsSupervised && (
+        <SupervisedBadge>🔒</SupervisedBadge>
+      )}
+
+      <Icon className={iconClass} />
+
       <div>
         <DeviceTitle>{device.DeviceName}</DeviceTitle>
         <DeviceInfo><strong>OS Version:</strong> {device.OSVersion}</DeviceInfo>
         <DeviceInfo><strong>Model Name:</strong> {device.ModelName}</DeviceInfo>
         <DeviceInfo><strong>Enrollment Status:</strong> {device.enrollment_status ? 'Enrolled' : 'Not Enrolled'}</DeviceInfo>
+
         {device.user && (
-          <DeviceInfo><strong>User Name:</strong> {device.user.name ?? device.user.username}</DeviceInfo>
+          <DeviceInfo>
+            <strong>User Name:</strong> {device.user.name ?? device.user.username}
+          </DeviceInfo>
         )}
       </div>
     </DeviceContainer>
   );
 };
+
+
 
 function DeviceList() {
   const navigate = useNavigate();

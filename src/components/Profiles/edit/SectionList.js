@@ -60,6 +60,25 @@ const SectionList = ({ activeSection, setActiveSection }) => {
       >
         Login Window
         </SectionButton>
+
+        <SectionButton
+        isActive={activeSection === 'SharedDeviceSettings'}
+        onClick={() => setActiveSection('SharedDeviceSettings')}
+      >
+       Shared Device 
+        </SectionButton>
+      <SectionButton
+        isActive={activeSection === 'RestrictionsSettings'}
+        onClick={() => setActiveSection('RestrictionsSettings')} 
+      >
+        Restrictions 
+      </SectionButton>
+      <SectionButton
+        isActive={activeSection === 'SingleAppModeSettings'}
+        onClick={() => setActiveSection('SingleAppModeSettings')}
+      >
+        Single App Mode
+      </SectionButton>
         
       {/* Add more sections as needed */}
     </ListContainer>

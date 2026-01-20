@@ -46,7 +46,10 @@ class JsonToPlistConverter
             'wifi' => ['isArray' => true, "PayloadType" => "com.apple.wifi.managed"],
             'certificates' => ['isArray' => true, "PayloadType" => "com.apple.security.root"],
             'domains' => ['isArray' => true, "PayloadType" => "com.apple.domains"],
-            'loginWindowSettings' => ['isArray' => false, "PayloadType" => "com.apple.loginwindow"]
+            'loginWindowSettings' => ['isArray' => false, "PayloadType" => "com.apple.loginwindow"],
+            'sharedDeviceSettings' => ['isArray' => false, "PayloadType" => "com.apple.shareddeviceconfiguration"],
+            'restrictionsSettings' => ['isArray' => false, "PayloadType" => "com.apple.applicationaccess"],
+            // 'singleAppModeSettings' => ['isArray' => false, "PayloadType" => "com.apple.app.lock"],
         ];
 
         foreach ($sections as $key => $section) {
@@ -77,34 +80,57 @@ class JsonToPlistConverter
 
     private function appendKeyValuePair($dom, &$dict, $key, $value, $type)
     {
+        // Skip empty arrays/objects
+        if ((is_array($value) || is_object($value)) && count((array)$value) === 0) {
+            return; // ← do not append anything
+        }
+    
+        // Append key
         $dict->appendChild($dom->createElement('key', $key));
-
+    
         if (is_bool($value)) {
             $dict->appendChild($dom->createElement($value ? 'true' : 'false'));
+    
         } elseif (is_array($value) || is_object($value)) {
+    
             $arrayElement = $dom->createElement('array');
+    
             foreach ($value as $itemKey => $itemValue) {
                 if (is_array($itemValue) || is_object($itemValue)) {
                     $subDict = $dom->createElement('dict');
                     $this->appendKeyValuePair($dom, $subDict, $itemKey, $itemValue, $type);
                     $arrayElement->appendChild($subDict);
+                    // if the key is not numeric, we need to add the key as well
+                } else if (!is_numeric($itemKey)) {
+                    // do key value     
+                    $this->appendKeyValuePair($dom, $arrayElement, $itemKey, $itemValue, $type);
                 } else {
-                    $arrayElement->appendChild($dom->createElement('string', htmlspecialchars($itemValue)));
+                    $arrayElement->appendChild($dom->createElement(
+                        'string',
+                        htmlspecialchars($itemValue)
+                    ));
                 }
             }
+    
             $dict->appendChild($arrayElement);
+    
         } elseif (is_numeric($value)) {
-            $dict->appendChild($dom->createElement(is_int($value) ? 'integer' : 'real', $value));
+            $dict->appendChild(
+                $dom->createElement(is_int($value) ? 'integer' : 'real', $value)
+            );
+    
         } elseif (is_string($value)) {
             if ($type === 'com.apple.security.root' && $key === 'PayloadContent') {
                 $dict->appendChild($dom->createElement('data', trim($value)));
             } else {
                 $dict->appendChild($dom->createElement('string', htmlspecialchars($value)));
             }
+    
         } else {
             $dict->appendChild($dom->createElement('string', htmlspecialchars((string)$value)));
         }
     }
+    
 
     private function addStaticFields($dom, &$dict, $type)
     {

@@ -58,7 +58,7 @@ function deviceCommands(){
 function getDevicesSmall()
 {
    global $MDMdevices;
-    $cursor = $MDMdevices->find([], ["projection" => ["udid" => 1, "DeviceName" => 1, "Model" => 1, "OSVersion" => 1, "enrollment_status" => 1, "userId" => 1,"ModelName" => 1,"lastCheckin" => 1]]);
+    $cursor = $MDMdevices->find([], ["projection" => ["udid" => 1, "DeviceName" => 1, "Model" => 1, "OSVersion" => 1, "enrollment_status" => 1, "userId" => 1,"ModelName" => 1,"lastCheckin" => 1,"IsSupervised" => 1]]);
     $users = Users_listall();
     $output = [];
     foreach ($cursor as $document) {
