@@ -1,291 +1,661 @@
-import React, { useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
-import axiosInstance from '../../utils/axios';
-import styled from 'styled-components';
-import Upload from './UploadProfile';  // Assuming the Upload component is in the same folder
-import ProfileTableRow from './ProfilelistCell';  // Assuming the ProfileTableRow component is in the same folder
+import React, { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "react-query";
+import axiosInstance from "../../utils/axios";
+import styled from "styled-components";
+import Upload from "./UploadProfile";
+import ProfileTableRow from "./ProfilelistCell";
 
-// Fetch profiles and devices
+/* ---------- API ---------- */
+
 const fetchProfiles = async () => {
-  const { data } = await axiosInstance.get('/v1/profiles/get');
+  const { data } = await axiosInstance.get("/v1/profiles/get");
   return data;
 };
 
 const fetchDevices = async () => {
-  const { data } = await axiosInstance.get('/v1/getDevicesSmall');
+  const { data } = await axiosInstance.get("/v1/getDevicesSmall");
   return data;
 };
 
-// Styled components
-const ProfileListContainer = styled.div`
+/* ---------- Styling (same style as Apps) ---------- */
+
+const Page = styled.div`
   width: 100%;
-  background-color: #f7f7f7;
-  padding: 20px;
-  height: 100vh;
-  overflow-y: auto;
+  min-height: 100vh;
+  background: #f6f7fb;
+  padding: 22px;
 `;
 
-const HeaderContainer = styled.div`
+const Card = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+`;
+
+const TopBar = styled.div`
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0.98));
 `;
 
-const SearchInput = styled.input`
-  width: 300px;
-  padding: 10px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  font-size: 14px;
+const Left = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const Title = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const H1 = styled.div`
+  font-weight: 900;
+  font-size: 16px;
+`;
+
+const Sub = styled.div`
+  font-size: 12px;
+  opacity: 0.7;
+`;
+
+const Search = styled.input`
+  width: 360px;
+  max-width: 70vw;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.12);
   outline: none;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+
+  &:focus {
+    border-color: rgba(0, 123, 255, 0.6);
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12);
+  }
+`;
+
+const TableWrap = styled.div`
+  overflow: auto;
 `;
 
 const Table = styled.table`
   width: 100%;
-  border-collapse: collapse;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 980px;
 `;
 
-const TableHeader = styled.th`
-  padding: 15px;
-  background-color: #007bff;
-  color: white;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-`;
-
-const TableCell = styled.td`
-  padding: 15px;
-  border-bottom: 1px solid #ddd;
-  vertical-align: middle;
-`;
-
-const ActionButton = styled.button`
-  padding: 8px 12px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  margin-right: 10px;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-`;
-
-const RemoveButton = styled(ActionButton)`
-  background-color: #dc3545;
-
-  &:hover {
-    background-color: #c82333;
-  }
-`;
-
-const ModalOverlay = styled.div`
-  position: fixed;
+const Thead = styled.thead`
+  position: sticky;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
-  z-index: 1000;
+  z-index: 5;
 `;
 
-const ModalContent = styled.div`
+const Th = styled.th`
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.65);
+  background: #fbfbfd;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  white-space: nowrap;
+`;
+
+const Empty = styled.div`
+  padding: 26px;
+  text-align: center;
+  opacity: 0.7;
+`;
+
+/* ---------- Modal styling ---------- */
+
+const Overlay = styled.div`
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
+  inset: 0;
+  background: rgba(10, 12, 16, 0.55);
+  display: ${({ $open }) => ($open ? "flex" : "none")};
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
   padding: 20px;
-  border-radius: 8px;
-  z-index: 1001;
-  width: 400px;
-  max-width: 100%;
+`;
+
+const Modal = styled.div`
+  width: min(980px, 96vw);
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 22px 70px rgba(0,0,0,0.35);
 `;
 
 const ModalHeader = styled.div`
+  padding: 14px 16px;
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
 `;
 
-const ModalTitle = styled.h2`
-  font-size: 18px;
-  margin: 0;
+const ModalTitle = styled.div`
+  font-weight: 900;
 `;
 
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 20px;
+const CloseBtn = styled.button`
+  border: 0;
+  background: transparent;
+  font-size: 22px;
   cursor: pointer;
+  opacity: 0.7;
+  &:hover { opacity: 1; }
 `;
 
-const ConfirmButton = styled.button`
-  padding: 10px 20px;
-  font-size: 16px;
-  color: white;
-  background-color: #28a745;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+const ModalBody = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 0;
+  min-height: 520px;
 
-  &:hover {
-    background-color: #218838;
+  @media (max-width: 880px) {
+    grid-template-columns: 1fr;
   }
 `;
 
-const DeviceCheckbox = styled.div`
-  margin-bottom: 10px;
+const BodyLeft = styled.div`
+  padding: 14px 16px;
+  border-right: 1px solid rgba(0,0,0,0.08);
+
+  @media (max-width: 880px) {
+    border-right: 0;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+`;
+
+const BodyRight = styled.div`
+  padding: 14px 16px;
+`;
+
+const Small = styled.div`
+  font-size: 12px;
+  opacity: 0.75;
+  font-weight: 800;
+`;
+
+const Segments = styled.div`
+  display: inline-flex;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  overflow: hidden;
+`;
+
+const Segment = styled.button`
+  border: 0;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: ${({ $active }) => ($active ? "rgba(0,123,255,0.92)" : "white")};
+  color: ${({ $active }) => ($active ? "white" : "rgba(0,0,0,0.75)")};
+  font-weight: 900;
+  font-size: 12px;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? "rgba(0,123,255,1)" : "rgba(0,0,0,0.03)")};
+  }
+`;
+
+const StatRow = styled.div`
   display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+`;
+
+const Stat = styled.div`
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.02);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-width: 160px;
+
+  div:first-child { font-size: 12px; opacity: 0.7; }
+  div:last-child { font-weight: 900; margin-top: 2px; }
+`;
+
+const DeviceSearch = styled.input`
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.12);
+  outline: none;
+
+  &:focus {
+    border-color: rgba(0, 123, 255, 0.6);
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12);
+  }
+`;
+
+const DeviceList = styled.div`
+  margin-top: 10px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 6px;
+`;
+
+const DeviceRow = styled.label`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+
+  &:hover { background: rgba(0,0,0,0.03); }
+`;
+
+const DeviceLeft = styled.div`
+  display: flex;
+  gap: 10px;
   align-items: center;
 `;
 
-const DeviceLabel = styled.label`
-  margin-left: 10px;
+const Pill = styled.span`
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  background: ${({ $tone }) =>
+    $tone === "ok" ? "rgba(40,167,69,0.14)"
+    : $tone === "warn" ? "rgba(255,193,7,0.16)"
+    : "rgba(220,53,69,0.14)"};
 `;
+
+const ActionRow = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+`;
+
+const PrimaryBtn = styled.button`
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 14px;
+  background: rgba(0, 123, 255, 0.92);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+
+  &:hover { background: rgba(0, 123, 255, 1); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+const DangerBtn = styled(PrimaryBtn)`
+  background: rgba(220, 53, 69, 0.92);
+  &:hover { background: rgba(220, 53, 69, 1); }
+`;
+
+const GhostBtn = styled.button`
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  padding: 11px 14px;
+  background: white;
+  font-weight: 900;
+  cursor: pointer;
+
+  &:hover { background: rgba(0,0,0,0.03); }
+`;
+
+/* ---------- Component ---------- */
 
 function ProfileList() {
   const queryClient = useQueryClient();
-  const { data: profiles, isLoading: isProfilesLoading, error: profilesError } = useQuery('profiles', fetchProfiles);
-  const { data: devices, isLoading: isDevicesLoading, error: devicesError } = useQuery('devices', fetchDevices);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { data: profiles, isLoading: isProfilesLoading, error: profilesError } = useQuery("profiles", fetchProfiles);
+  const { data: devices, isLoading: isDevicesLoading, error: devicesError } = useQuery("devices", fetchDevices);
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // action modal
+  const [open, setOpen] = useState(false);
+  const [actionType, setActionType] = useState("push"); // push | remove
   const [selectedProfile, setSelectedProfile] = useState(null);
-  const [selectedDevices, setSelectedDevices] = useState([]);
-  const [actionType, setActionType] = useState(''); // 'push' or 'remove'
+  const [deviceSearch, setDeviceSearch] = useState("");
+  const [targetMode, setTargetMode] = useState("missing"); // all | missing | installed
+  const [selectedUdids, setSelectedUdids] = useState([]);
 
-  const handlePushProfile = (profile) => {
+  // details modal
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsProfile, setDetailsProfile] = useState(null);
+  const [detailsTab, setDetailsTab] = useState("summary"); // summary | devices | raw
+
+  const devicesByUdid = useMemo(() => {
+    const m = new Map();
+    (devices || []).forEach((d) => m.set(d.udid, d));
+    return m;
+  }, [devices]);
+
+  const filteredProfiles = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const list = profiles || [];
+    if (!q) return list;
+
+    return list.filter((p) => {
+      const name = (p.PayloadDisplayName || p.name || "").toLowerCase();
+      const uuid = (p.PayloadUUID || "").toLowerCase();
+      return name.includes(q) || uuid.includes(q);
+    });
+  }, [profiles, searchQuery]);
+
+  const installedSet = useMemo(() => {
+    const udids = selectedProfile?.devices || [];
+    return new Set(Array.isArray(udids) ? udids : []);
+  }, [selectedProfile]);
+
+  const computedTargets = useMemo(() => {
+    const all = (devices || []).map((d) => d.udid);
+    const installed = all.filter((u) => installedSet.has(u));
+    const missing = all.filter((u) => !installedSet.has(u));
+    return { all, installed, missing };
+  }, [devices, installedSet]);
+
+  const visibleDeviceUdids = useMemo(() => {
+    const base =
+      targetMode === "all" ? computedTargets.all :
+      targetMode === "installed" ? computedTargets.installed :
+      computedTargets.missing;
+
+    const q = deviceSearch.trim().toLowerCase();
+    if (!q) return base;
+
+    return base.filter((udid) => {
+      const d = devicesByUdid.get(udid);
+      const name = (d?.DeviceName || "").toLowerCase();
+      return name.includes(q) || udid.toLowerCase().includes(q);
+    });
+  }, [targetMode, computedTargets, deviceSearch, devicesByUdid]);
+
+  const openActionModal = (profile, type) => {
     setSelectedProfile(profile);
-    setActionType('push');
-    setIsModalOpen(true);
+    setActionType(type);
+    setDeviceSearch("");
+
+    // default selection:
+    const installed = Array.isArray(profile.devices) ? profile.devices : [];
+    const defaults =
+      type === "push"
+        ? (devices || []).map((d) => d.udid).filter((u) => !installed.includes(u)) // push missing
+        : installed; // remove installed
+
+    setTargetMode(type === "push" ? "missing" : "installed");
+    setSelectedUdids(defaults);
+    setOpen(true);
   };
 
-  const handleRemoveProfile = (profile) => {
-    setSelectedProfile(profile);
-    setActionType('remove');
-    setIsModalOpen(true);
+  const openDetails = (profile) => {
+    setDetailsProfile(profile);
+    setDetailsTab("summary");
+    setDetailsOpen(true);
   };
 
-  const handleDeviceChange = (deviceUdid) => {
-    setSelectedDevices((prevSelected) =>
-      prevSelected.includes(deviceUdid)
-        ? prevSelected.filter((udid) => udid !== deviceUdid)
-        : [...prevSelected, deviceUdid]
-    );
+  const toggleUdid = (udid) => {
+    setSelectedUdids((prev) => (prev.includes(udid) ? prev.filter((x) => x !== udid) : [...prev, udid]));
   };
 
-  const handleSelectAllDevices = (e) => {
-    if (e.target.checked) {
-      setSelectedDevices(devices.map((device) => device.udid));
-    } else {
-      setSelectedDevices([]);
-    }
+  const quickSelect = (mode) => {
+    setSelectedUdids(computedTargets[mode] || []);
   };
 
   const handleConfirmAction = async () => {
-    if (selectedDevices.length === 0) {
-      alert('Please select at least one device');
+    if (!selectedProfile) return;
+    if (selectedUdids.length === 0) {
+      alert("Please select at least one device");
       return;
     }
 
     const payload = {
       profileId: selectedProfile.PayloadUUID,
-      deviceUdids: selectedDevices,
+      deviceUdids: selectedUdids,
     };
 
-    if (actionType === 'push') {
-      await axiosInstance.post('/v1/profiles/device/push', payload);
-    } else if (actionType === 'remove') {
-      await axiosInstance.post('/v1/profiles/device/remove', payload); // Adjust the API endpoint as needed
-    }
+    try {
+      if (actionType === "push") {
+        await axiosInstance.post("/v1/profiles/device/push", payload);
+      } else {
+        await axiosInstance.post("/v1/profiles/device/remove", payload);
+      }
 
-    setIsModalOpen(false);
-    queryClient.invalidateQueries('profiles');
+      setOpen(false);
+      setSelectedUdids([]);
+      queryClient.invalidateQueries("profiles");
+    } catch (e) {
+      console.error(e);
+      alert("Action failed. Check server logs / try again.");
+    }
   };
 
-  if (isProfilesLoading || isDevicesLoading) return <div>Loading...</div>;
-  if (profilesError || devicesError) return <div>Error fetching data</div>;
-
-  const filteredProfiles = profiles?.filter(profile => {
-    if (searchQuery === '') return true;
-    return profile.name?.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  if (isProfilesLoading || isDevicesLoading) return <Page>Loading…</Page>;
+  if (profilesError || devicesError) return <Page>Error fetching data</Page>;
 
   return (
-    <ProfileListContainer>
-      <HeaderContainer>
-        <SearchInput
-          type="text"
-          placeholder="Search profiles..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <Upload />
-      </HeaderContainer>
-      <Table>
-        <thead>
-          <tr>
-            <TableHeader>Profile Name</TableHeader>
-            <TableHeader>UUID</TableHeader>
-            <TableHeader>Action</TableHeader>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredProfiles.map((profile) => (
-            <ProfileTableRow
-              profile={profile}
-              onPushProfile={handlePushProfile}
-              onRemoveProfile={handleRemoveProfile}
-              hidePushButton={false} // Show the Push Profile button
-              hideRemoveButton={false} // Hide the Remove Profile button
-            />
-          ))}
-        </tbody>
-      </Table>
+    <Page>
+      <Card>
+        <TopBar>
+          <Left>
+            <Title>
+              <H1>Profiles</H1>
+              <Sub>{filteredProfiles.length} profiles • {devices?.length || 0} devices</Sub>
+            </Title>
 
-      {/* Modal for device selection */}
-      <ModalOverlay isOpen={isModalOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>{actionType === 'push' ? 'Select Devices to Push Profile' : 'Select Devices to Remove Profile'}</ModalTitle>
-            <CloseButton onClick={() => setIsModalOpen(false)}>&times;</CloseButton>
-          </ModalHeader>
-          <DeviceCheckbox>
-            <input
-              type="checkbox"
-              id="select-all"
-              onChange={handleSelectAllDevices}
-              checked={selectedDevices.length === devices.length}
+            <Search
+              placeholder="Search profiles by name / UUID…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <DeviceLabel htmlFor="select-all">Select All Devices</DeviceLabel>
-          </DeviceCheckbox>
-          {devices.map((device) => (
-            <DeviceCheckbox key={device.udid}>
-              <input
-                type="checkbox"
-                id={device.udid}
-                checked={selectedDevices.includes(device.udid)}
-                onChange={() => handleDeviceChange(device.udid)}
-              />
-              <DeviceLabel htmlFor={device.udid}>{device.DeviceName}</DeviceLabel>
-            </DeviceCheckbox>
-          ))}
-          <ConfirmButton onClick={handleConfirmAction}>
-            {actionType === 'push' ? 'Push Profile' : 'Remove Profile'}
-          </ConfirmButton>
-        </ModalContent>
-      </ModalOverlay>
-    </ProfileListContainer>
+          </Left>
+
+          <Upload onUploadSuccess={() => queryClient.invalidateQueries("profiles")} />
+        </TopBar>
+
+        <TableWrap>
+          <Table>
+            <Thead>
+              <tr>
+                <Th>Profile</Th>
+                <Th>UUID</Th>
+                <Th>Installed on</Th>
+                <Th style={{ width: 220, textAlign: "right" }}>Actions</Th>
+              </tr>
+            </Thead>
+            <tbody>
+              {filteredProfiles.length === 0 ? (
+                <tr>
+                  <td colSpan={4}>
+                    <Empty>No profiles match your search.</Empty>
+                  </td>
+                </tr>
+              ) : (
+                filteredProfiles.map((profile) => (
+                  <ProfileTableRow
+                    key={profile.PayloadUUID}
+                    profile={profile}
+                    devicesByUdid={devicesByUdid}
+                    onPush={() => openActionModal(profile, "push")}
+                    onRemove={() => openActionModal(profile, "remove")}
+                    onDetails={() => openDetails(profile)}
+                  />
+                ))
+              )}
+            </tbody>
+          </Table>
+        </TableWrap>
+      </Card>
+
+      {/* Action Modal (push/remove) */}
+      <Overlay $open={open}>
+        <Modal>
+          <ModalHeader>
+            <div>
+              <ModalTitle>
+                {actionType === "push" ? "Push profile" : "Remove profile"}
+              </ModalTitle>
+              <Sub style={{ marginTop: 2 }}>
+                {selectedProfile?.PayloadDisplayName || "—"} • {selectedProfile?.PayloadUUID || "—"}
+              </Sub>
+            </div>
+            <CloseBtn onClick={() => setOpen(false)}>&times;</CloseBtn>
+          </ModalHeader>
+
+          <ModalBody>
+            <BodyLeft>
+              <Small>Target selection</Small>
+              <div style={{ marginTop: 8 }}>
+                <Segments>
+                  <Segment $active={targetMode === "missing"} onClick={() => { setTargetMode("missing"); quickSelect("missing"); }}>
+                    Missing
+                  </Segment>
+                  <Segment $active={targetMode === "installed"} onClick={() => { setTargetMode("installed"); quickSelect("installed"); }}>
+                    Installed
+                  </Segment>
+                  <Segment $active={targetMode === "all"} onClick={() => { setTargetMode("all"); quickSelect("all"); }}>
+                    All
+                  </Segment>
+                </Segments>
+              </div>
+
+              <StatRow>
+                <Stat><div>Selected</div><div>{selectedUdids.length}</div></Stat>
+                <Stat><div>Installed</div><div>{computedTargets.installed.length}</div></Stat>
+                <Stat><div>Missing</div><div>{computedTargets.missing.length}</div></Stat>
+              </StatRow>
+
+              <div style={{ marginTop: 14 }}>
+                <Small>Device search</Small>
+                <div style={{ marginTop: 8 }}>
+                  <DeviceSearch
+                    value={deviceSearch}
+                    placeholder="Filter devices by name/udid…"
+                    onChange={(e) => setDeviceSearch(e.target.value)}
+                  />
+                </div>
+
+                <DeviceList>
+                  {visibleDeviceUdids.map((udid) => {
+                    const d = devicesByUdid.get(udid);
+                    const name = d?.DeviceName || udid;
+                    const isInstalled = (selectedProfile?.devices || []).includes(udid);
+                    const tone = isInstalled ? "ok" : "warn";
+                    const label = isInstalled ? "Installed" : "Not installed";
+
+                    return (
+                      <DeviceRow key={udid}>
+                        <DeviceLeft>
+                          <input
+                            type="checkbox"
+                            checked={selectedUdids.includes(udid)}
+                            onChange={() => toggleUdid(udid)}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 900 }}>{name}</div>
+                            <div style={{ fontSize: 12, opacity: 0.7 }}>{udid}</div>
+                          </div>
+                        </DeviceLeft>
+                        <Pill $tone={tone}>{label}</Pill>
+                      </DeviceRow>
+                    );
+                  })}
+                  {visibleDeviceUdids.length === 0 ? (
+                    <Empty style={{ padding: 12 }}>No devices match filter.</Empty>
+                  ) : null}
+                </DeviceList>
+              </div>
+            </BodyLeft>
+
+            <BodyRight>
+              <Small>Confirm</Small>
+              <div style={{ marginTop: 8 }}>
+                {actionType === "push" ? (
+                  <PrimaryBtn onClick={handleConfirmAction} disabled={selectedUdids.length === 0}>
+                    Push to {selectedUdids.length} device{selectedUdids.length === 1 ? "" : "s"}
+                  </PrimaryBtn>
+                ) : (
+                  <DangerBtn onClick={handleConfirmAction} disabled={selectedUdids.length === 0}>
+                    Remove from {selectedUdids.length} device{selectedUdids.length === 1 ? "" : "s"}
+                  </DangerBtn>
+                )}
+              </div>
+
+              <ActionRow>
+                <GhostBtn onClick={() => quickSelect("installed")}>Select installed</GhostBtn>
+                <GhostBtn onClick={() => quickSelect("missing")}>Select missing</GhostBtn>
+                <GhostBtn onClick={() => setSelectedUdids([])}>Clear</GhostBtn>
+              </ActionRow>
+            </BodyRight>
+          </ModalBody>
+        </Modal>
+      </Overlay>
+
+      {/* Details Modal */}
+      <Overlay $open={detailsOpen}>
+        <Modal>
+          <ModalHeader>
+            <div>
+              <ModalTitle>Profile details</ModalTitle>
+              <Sub style={{ marginTop: 2 }}>
+                {detailsProfile?.PayloadDisplayName || "—"} • {detailsProfile?.PayloadUUID || "—"}
+              </Sub>
+              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <GhostBtn onClick={() => setDetailsTab("summary")} style={{ fontWeight: 900 }}>
+                  Summary
+                </GhostBtn>
+                <GhostBtn onClick={() => setDetailsTab("devices")} style={{ fontWeight: 900 }}>
+                  Devices
+                </GhostBtn>
+                <GhostBtn onClick={() => setDetailsTab("raw")} style={{ fontWeight: 900 }}>
+                  Raw
+                </GhostBtn>
+              </div>
+            </div>
+            <CloseBtn onClick={() => setDetailsOpen(false)}>&times;</CloseBtn>
+          </ModalHeader>
+
+          <div style={{ padding: 14 }}>
+            <pre style={{
+              margin: 0,
+              padding: 12,
+              borderRadius: 14,
+              background: "rgba(2,6,23,0.92)",
+              color: "rgba(255,255,255,0.92)",
+              fontSize: 12,
+              maxHeight: 520,
+              overflow: "auto"
+            }}>
+              {detailsTab === "summary" && JSON.stringify({
+                name: detailsProfile?.PayloadDisplayName,
+                uuid: detailsProfile?.PayloadUUID,
+                installedCount: detailsProfile?.devices?.length || 0,
+              }, null, 2)}
+              {detailsTab === "devices" && JSON.stringify(
+                (detailsProfile?.devices || []).map((udid) => ({
+                  udid,
+                  name: devicesByUdid.get(udid)?.DeviceName || null
+                })),
+                null,
+                2
+              )}
+              {detailsTab === "raw" && JSON.stringify(detailsProfile || {}, null, 2)}
+            </pre>
+          </div>
+        </Modal>
+      </Overlay>
+    </Page>
   );
 }
 

@@ -18,7 +18,6 @@ const AppContainer = styled.div`
 const MainContentContainer = styled.div`
   display: flex;
   flex: 1;
-  margin-top: ${HEADER_HEIGHT};
   overflow-y: auto;
 `;
 

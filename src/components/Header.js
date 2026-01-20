@@ -1,234 +1,349 @@
-import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { useMutation } from 'react-query';
-import axiosInstance, { userAccessToserviceSub } from '../utils/axios';
-import { QRCodeCanvas } from 'qrcode.react';  // Import QRCodeCanvas
+import React, { useEffect, useMemo, useState } from "react";
+import styled from "styled-components";
+import { Link, useLocation } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
+import { userAccessToserviceSub } from "../utils/axios";
 
+/* ---------- Styling ---------- */
 
-// Styled Components
-const HeaderContainer = styled.div`
-  background-color: #f5f5f5;
-  padding: 10px 20px;
-  border-bottom: 1px solid #ddd;
+const Shell = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 1500;
+  padding: 14px 22px;
+  background: linear-gradient(to bottom, rgba(246,247,251,1), rgba(246,247,251,0.85));
+  backdrop-filter: blur(8px);
+`;
+
+const Bar = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+`;
+
+const Left = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const Brand = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-right: 8px;
+`;
+
+const Title = styled.div`
+  font-weight: 900;
+  font-size: 14px;
+`;
+
+const Sub = styled.div`
+  font-size: 12px;
+  opacity: 0.7;
+`;
+
+const Nav = styled.nav`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const NavPill = styled(Link)`
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 13px;
+  border: 1px solid rgba(0,0,0,0.10);
+  color: rgba(0,0,0,0.75);
+  background: white;
+
+  &:hover {
+    background: rgba(0,0,0,0.03);
+  }
+
+  &[data-active="true"] {
+    background: rgba(0,123,255,0.12);
+    border-color: rgba(0,123,255,0.25);
+    color: rgba(0,123,255,0.95);
+  }
+`;
+
+const Right = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+`;
+
+const PrimaryBtn = styled.button`
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(0,123,255,0.92);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+
+  &:hover { background: rgba(0,123,255,1); }
+`;
+
+const GhostBtn = styled.button`
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: white;
+  font-weight: 900;
+  cursor: pointer;
+
+  &:hover { background: rgba(0,0,0,0.03); }
+`;
+
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 16, 0.55);
+  display: ${({ $open }) => ($open ? "flex" : "none")};
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+`;
+
+const Modal = styled.div`
+  width: min(820px, 96vw);
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 22px 70px rgba(0,0,0,0.35);
+`;
+
+const ModalHeader = styled.div`
+  padding: 14px 16px;
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   align-items: center;
-  top: 0;
-  left: 0;
-  right: 0;
-  position: fixed;
-  z-index: 1000;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
 `;
 
-const HeaderList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
+const ModalTitle = styled.div`
+  font-weight: 900;
 `;
 
-const HeaderItem = styled.li`
-  padding: 10px 15px;
-  margin-right: 10px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  transition: background-color 0.3s, transform 0.3s;
-
-  &:hover {
-    background-color: #e0e0e0;
-    transform: translateY(-2px);
-  }
-
-  a {
-    text-decoration: none;
-    color: #333;
-    font-size: 16px;
-    font-weight: 500;
-    display: block;
-  }
-`;
-
-const AddDeviceButton = styled.button`
-  padding: 5px 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
+const CloseBtn = styled.button`
+  border: 0;
+  background: transparent;
+  font-size: 22px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  transition: background-color 0.3s, transform 0.3s;
+  opacity: 0.7;
+  &:hover { opacity: 1; }
+`;
 
-  &:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
+const ModalBody = styled.div`
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 0;
+  padding: 14px 16px;
+
+  @media (max-width: 820px) {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 `;
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
-  z-index: 1000;
+const Panel = styled.div`
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.02);
+  border-radius: 16px;
+  padding: 14px;
 `;
 
-const ModalContent = styled.div`
+const Label = styled.div`
+  font-size: 12px;
+  opacity: 0.75;
+  font-weight: 800;
+`;
+
+const Mono = styled.div`
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.92);
+  color: rgba(255,255,255,0.92);
+  font-size: 12px;
+  overflow: auto;
+`;
+
+const ActionRow = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+`;
+
+const Toast = styled.div`
   position: fixed;
-  top: 50%;
+  bottom: 16px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  z-index: 1001;
-  width: 300px;
-  max-width: 100%;
-`;
-
-const ModalButton = styled.button`
-  width: 100%;
-  padding: 10px 20px;
-  font-size: 16px;
+  transform: translateX(-50%);
+  background: rgba(2, 6, 23, 0.92);
   color: white;
-  background-color: #007bff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 10px;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
+  padding: 10px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 13px;
+  z-index: 3000;
+  opacity: ${({ $show }) => ($show ? 1 : 0)};
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 `;
 
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-`;
-const QRCodeContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
-`;
+/* ---------- Component ---------- */
 
 function Header() {
+  const location = useLocation();
+
   const [access, setAccess] = useState({
     devices: false,
     apps: false,
     profiles: false,
     events: false,
   });
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [open, setOpen] = useState(false);
+  const [toast, setToast] = useState("");
+
   const enrollLink = "https://device.server.thomasdye.net/TDSapi/v1/system/mdm/enroll";
 
   useEffect(() => {
     const checkAccess = async () => {
-      const devicesAccess = await userAccessToserviceSub('net.thomasdye.profilemanager.devices.all');
-      const appsAccess = await userAccessToserviceSub('net.thomasdye.profilemanager.apps.all');
-      const profilesAccess = await userAccessToserviceSub('net.thomasdye.profilemanager.profiles.all');
-      const eventsAccess = await userAccessToserviceSub('net.thomasdye.profilemanager.events.all');
+      const devicesAccess = await userAccessToserviceSub("net.thomasdye.profilemanager.devices.all");
+      const appsAccess = await userAccessToserviceSub("net.thomasdye.profilemanager.apps.all");
+      const profilesAccess = await userAccessToserviceSub("net.thomasdye.profilemanager.profiles.all");
+      const eventsAccess = await userAccessToserviceSub("net.thomasdye.profilemanager.events.all");
 
-      setAccess({
-        devices: devicesAccess,
-        apps: appsAccess,
-        profiles: profilesAccess,
-        events: eventsAccess,
-      });
+      setAccess({ devices: devicesAccess, apps: appsAccess, profiles: profilesAccess, events: eventsAccess });
     };
-
     checkAccess();
   }, []);
 
-  const handleDownloadClick = () => {
+  const navItems = useMemo(() => {
+    const items = [];
+    if (access.devices) items.push({ to: "/devices", label: "Devices" });
+    if (access.apps) items.push({ to: "/apps", label: "Apps" });
+    if (access.profiles) items.push({ to: "/profiles", label: "Profiles" });
+    if (access.events) items.push({ to: "/events", label: "Events" });
+    return items;
+  }, [access]);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    window.clearTimeout(showToast._t);
+    showToast._t = window.setTimeout(() => setToast(""), 1800);
+  };
+
+  const handleDownload = () => {
     window.location.href = enrollLink;
   };
 
-  const handleCopyLinkClick = () => {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(enrollLink).then(() => {
-        alert('Link copied to clipboard');
-      }).catch((err) => {
-        console.error('Failed to copy: ', err);
-        alert('Failed to copy the link');
-      });
-    } else {
-      // Fallback: create a temporary input element to copy the link
-      const textArea = document.createElement("textarea");
-      textArea.value = enrollLink;
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(enrollLink);
+      showToast("Copied enrollment link");
+    } catch {
+      // fallback
+      const el = document.createElement("textarea");
+      el.value = enrollLink;
+      document.body.appendChild(el);
+      el.select();
       try {
-        document.execCommand('copy');
-        alert('Link copied to clipboard');
-      } catch (err) {
-        console.error('Failed to copy: ', err);
-        alert('Failed to copy the link');
+        document.execCommand("copy");
+        showToast("Copied enrollment link");
+      } catch {
+        showToast("Copy failed");
       }
-      document.body.removeChild(textArea);
+      document.body.removeChild(el);
     }
-  };
-
-  const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
   };
 
   return (
     <>
-      <HeaderContainer>
-        <HeaderList>
-          {access.devices && (
-            <HeaderItem>
-              <Link to="/devices">Devices</Link>
-            </HeaderItem>
-          )}
-          {access.apps && (
-            <HeaderItem>
-              <Link to="/apps">Apps</Link>
-            </HeaderItem>
-          )}
-          {access.profiles && (
-            <HeaderItem>
-              <Link to="/profiles">Profiles</Link>
-            </HeaderItem>
-          )}
-          {access.events && (
-            <HeaderItem>
-              <Link to="/events">Events</Link>
-            </HeaderItem>
-          )}
-          {/* Add more links as needed */}
-        </HeaderList>
-        <AddDeviceButton onClick={toggleModal}>
-          Add a New Device
-        </AddDeviceButton>
-      </HeaderContainer>
+      <Shell>
+        <Bar>
+          <Left>
+            <Brand>
+              <Title>Profile Manager</Title>
+              <Sub>Quick navigation & enrollment</Sub>
+            </Brand>
 
-      <ModalOverlay isOpen={isModalOpen}>
-        <ModalContent>
-          <CloseButton onClick={toggleModal}>&times;</CloseButton>
-          <ModalButton onClick={handleDownloadClick}>Download File</ModalButton>
-          <ModalButton onClick={handleCopyLinkClick}>Copy Link</ModalButton>
-          <QRCodeContainer>
-            <QRCodeCanvas value={enrollLink} size={128} />
-          </QRCodeContainer>
-        </ModalContent>
-      </ModalOverlay>
+            <Nav>
+              {navItems.map((it) => (
+                <NavPill
+                  key={it.to}
+                  to={it.to}
+                  data-active={location.pathname.startsWith(it.to)}
+                >
+                  {it.label}
+                </NavPill>
+              ))}
+            </Nav>
+          </Left>
+
+          <Right>
+            <GhostBtn onClick={handleCopy}>Copy Enroll Link</GhostBtn>
+            <PrimaryBtn onClick={() => setOpen(true)}>Add device</PrimaryBtn>
+          </Right>
+        </Bar>
+      </Shell>
+
+      <Overlay $open={open}>
+        <Modal>
+          <ModalHeader>
+            <div>
+              <ModalTitle>Add a new device</ModalTitle>
+              <Sub style={{ marginTop: 2 }}>
+                Download the enrollment profile or scan the QR code.
+              </Sub>
+            </div>
+            <CloseBtn onClick={() => setOpen(false)}>&times;</CloseBtn>
+          </ModalHeader>
+
+          <ModalBody>
+            <Panel>
+              <Label>Enrollment URL</Label>
+              <Mono>{enrollLink}</Mono>
+
+              <ActionRow>
+                <PrimaryBtn onClick={handleDownload}>Download enrollment file</PrimaryBtn>
+                <GhostBtn onClick={handleCopy}>Copy link</GhostBtn>
+              </ActionRow>
+
+              <Sub style={{ marginTop: 10 }}>
+                Tip: Opening this link on iOS should prompt profile download/install.
+              </Sub>
+            </Panel>
+
+            <Panel style={{ display: "grid", placeItems: "center" }}>
+              <Label style={{ marginBottom: 10 }}>Scan to enroll</Label>
+              <QRCodeCanvas value={enrollLink} size={176} />
+              <Sub style={{ marginTop: 10, textAlign: "center" }}>
+                Scan with Camera app
+              </Sub>
+            </Panel>
+          </ModalBody>
+        </Modal>
+      </Overlay>
+
+      <Toast $show={!!toast}>{toast}</Toast>
     </>
   );
 }

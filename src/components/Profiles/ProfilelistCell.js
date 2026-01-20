@@ -1,132 +1,181 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import { useQuery } from 'react-query';
-import axiosInstance from '../../utils/axios'; // Assuming you have axios instance setup
-import Modal from '../../utils/Modal'; // Import the Modal component
+import React, { useMemo } from "react";
+import styled from "styled-components";
+import { Link } from "react-router-dom";
 
-// Styled components for buttons (reuse from your existing code)
-const TableCell = styled.td`
-  padding: 15px;
-  border-bottom: 1px solid #ddd;
+/* ---------- Styling ---------- */
+
+const Tr = styled.tr`
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 123, 255, 0.06);
+  }
+`;
+
+const Td = styled.td`
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   vertical-align: middle;
+  font-size: 14px;
 `;
 
-const ButtonGroup = styled.div`
+const NameBlock = styled.div`
   display: flex;
-  gap: 10px; /* Space between buttons */
+  flex-direction: column;
+  gap: 2px;
 `;
 
-const ActionButton = styled.button`
+const Primary = styled.div`
+  font-weight: 900;
+  line-height: 1.1;
+`;
+
+const Sub = styled.div`
+  font-size: 12px;
+  opacity: 0.7;
+`;
+
+const ChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+`;
+
+const Chip = styled.span`
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.05);
+`;
+
+const Muted = styled.span`
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  opacity: 0.75;
+`;
+
+const BtnRow = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+`;
+
+const Button = styled.button`
   padding: 8px 12px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: white;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-weight: 900;
+  font-size: 13px;
 
   &:hover {
-    background-color: #0056b3;
+    background: rgba(0, 0, 0, 0.03);
   }
 `;
 
-const RemoveButton = styled(ActionButton)`
-  background-color: #dc3545;
+const PrimaryBtn = styled(Button)`
+  background: rgba(0, 123, 255, 0.92);
+  color: white;
+  border-color: transparent;
 
   &:hover {
-    background-color: #c82333;
+    background: rgba(0, 123, 255, 1);
   }
 `;
 
+const DangerBtn = styled(Button)`
+  background: rgba(220, 53, 69, 0.92);
+  color: white;
+  border-color: transparent;
+
+  &:hover {
+    background: rgba(220, 53, 69, 1);
+  }
+`;
+
+// make Link look like a button
 const EditLink = styled(Link)`
   padding: 8px 12px;
-  background-color: #28a745;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(40, 167, 69, 0.92);
   color: white;
-  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 13px;
   text-decoration: none;
-  display: inline-block;
-  transition: background-color 0.3s;
+  display: inline-flex;
+  align-items: center;
 
   &:hover {
-    background-color: #218838;
+    background: rgba(40, 167, 69, 1);
   }
 `;
 
-const ProfileTableRow = ({ profile, onPushProfile, onRemoveProfile, hidePushButton, hideRemoveButton, hideEditButton }) => {
-  const [showModal, setShowModal] = useState(false);
-  const [matchedDevices, setMatchedDevices] = useState([]);
+function ProfileTableRow({
+  profile,
+  devicesByUdid,
+  onPush,
+  onRemove,
+  onDetails,
+  maxChips = 3,
+}) {
+  const installedUdids = Array.isArray(profile.devices) ? profile.devices : [];
 
-  // Function to fetch all devices
-  const fetchDevices = async () => {
-    const { data } = await axiosInstance.get('/v1/getDevicesSmall');
-    return data;
-  };
+  const installedNames = useMemo(() => {
+    return installedUdids
+      .map((udid) => devicesByUdid?.get(udid)?.DeviceName || udid)
+      .filter(Boolean);
+  }, [installedUdids, devicesByUdid]);
 
-  const { data: devices, isLoading, error } = useQuery('devices', fetchDevices);
+  const shown = installedNames.slice(0, maxChips);
+  const overflow = installedNames.length - shown.length;
 
-  useEffect(() => {
-    if (devices && showModal) {
-      if (!profile.devices || profile.devices.length === 0) {
-        setMatchedDevices([]);
-        return;
-      }
-      const matched = devices.filter(device => profile.devices.includes(device.udid));
-      setMatchedDevices(matched);
-    }
-  }, [devices, showModal, profile.devices]);
+  const canEdit = !!profile.edit; // same flag you used before
 
   return (
-    <>
-      <tr key={profile.id}>
-        <TableCell>{profile.PayloadDisplayName}</TableCell>
-        <TableCell>{profile.PayloadUUID}</TableCell>
-        <TableCell>
-          <ButtonGroup>
-            {!hidePushButton && (
-              <ActionButton onClick={() => onPushProfile(profile)}>
-                Push Profile
-              </ActionButton>
-            )}
-            {!hideRemoveButton && (
-              <RemoveButton onClick={() => onRemoveProfile(profile)}>
-                Remove Profile
-              </RemoveButton>
-            )}
-            {!hideEditButton && profile.edit && (
-              <EditLink to={`/profiles/${profile.PayloadUUID}/edit`}>
-                Edit Profile
-              </EditLink>
-            )}
-            <ActionButton onClick={() => setShowModal(true)}>
-              Show Details
-            </ActionButton>
-            <ActionButton onClick={() => window.open(`/TDSapi/v1/profiles/${profile.PayloadUUID}/download`)}>
-               Download
-          </ActionButton>
-          </ButtonGroup>
-        </TableCell>
-      </tr>
+    <Tr>
+      <Td>
+        <NameBlock>
+          <Primary>{profile.PayloadDisplayName || profile.name || "Unnamed profile"}</Primary>
+          <Sub>{profile.PayloadUUID || "—"}</Sub>
+        </NameBlock>
+      </Td>
 
-      <Modal show={showModal} onClose={() => setShowModal(false)}>
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : error ? (
-          <p>Error fetching devices</p>
+      <Td>
+        {installedNames.length === 0 ? (
+          <Muted>Not installed</Muted>
         ) : (
-          <ul>
-            {matchedDevices.length > 0 ? (
-              matchedDevices.map(device => (
-                <li key={device.udid}>{device.DeviceName}</li>
-              ))
-            ) : (
-              <p>No devices found for this profile</p>
-            )}
-          </ul>
+          <ChipRow>
+            {shown.map((n) => (
+              <Chip key={n}>{n}</Chip>
+            ))}
+            {overflow > 0 ? <Chip>+{overflow}</Chip> : null}
+          </ChipRow>
         )}
-      </Modal>
-    </>
+      </Td>
+
+      <Td style={{ textAlign: "right" }}>
+        <BtnRow>
+          <PrimaryBtn onClick={onPush}>Push</PrimaryBtn>
+          <DangerBtn onClick={onRemove}>Remove</DangerBtn>
+
+          {canEdit ? (
+            <EditLink to={`/profiles/${profile.PayloadUUID}/edit`}>Edit</EditLink>
+          ) : null}
+
+          <Button onClick={onDetails}>Details</Button>
+          <Button onClick={() => window.open(`/TDSapi/v1/profiles/${profile.PayloadUUID}/download`)}>
+            Download
+          </Button>
+        </BtnRow>
+      </Td>
+    </Tr>
   );
-};
+}
 
 export default ProfileTableRow;
