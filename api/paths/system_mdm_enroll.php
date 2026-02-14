@@ -14,9 +14,9 @@ function system_mdm_enroll(){
 
 function  MDMServiceConfig(){
     // {
-    //     "dep_enrollment_url": "https://device.server2.thomasdye.net/devicemanagement/api/device/dep_mdm_enroll",
-    //     "dep_anchor_certs_url": "https://device.server2.thomasdye.net/devicemanagement/DEPAnchorCerts.json",
-    //     "trust_profile_url": "https://device.server2.thomasdye.net/devicemanagement/Trust_Profile_for_TDS.mobileconfig"
+    //     "dep_enrollment_url": "https://HOST/devicemanagement/api/device/dep_mdm_enroll",
+    //     "dep_anchor_certs_url": "https://HOST/devicemanagement/DEPAnchorCerts.json",
+    //     "trust_profile_url": "https://HOST/devicemanagement/Trust_Profile_for_TDS.mobileconfig"
     // }
     $output = [
         "dep_enrollment_url" => "https://".$GLOBALS["hostName"]."/TDSapi/api/system/mdm/dep_enroll",

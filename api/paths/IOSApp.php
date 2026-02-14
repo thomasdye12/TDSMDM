@@ -15,7 +15,7 @@ function App_Device_getAvailableApps($deviceID) {
             "version" => $app["infolist"]["CFBundleShortVersionString"],
             "BundleIdentifier" => $app["CFBundleIdentifier"],
             "icon" => empty($app["icon"])  ? null : $app["icon"],
-            "iconURL" => empty($app["icon"])  ? null : "https://device.server.thomasdye.net/TDSapi/files/icons/". $app["icon"],
+            "iconURL" => empty($app["icon"])  ? null : "https://".$GLOBALS["hostName"]."/TDSapi/files/icons/". $app["icon"],
             "uploaded" => $app["uploaded"],
             "installed" => false,
             "installed_info" => null,

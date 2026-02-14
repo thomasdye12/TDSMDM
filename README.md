@@ -18,10 +18,10 @@ There are config parameters that need to be set in the api/funcs/includes.php fi
 There is also Mongo DB config settings in the DB file, also refreance to the mongo db php driver.
 
 ```php
-$GLOBALS["InstallPath"] = "/Library/Server/Web/Data/Sites/server.thomasdye/TDSMDM/api";
-$GLOBALS["appDir"] = "/Library/Server/Web/Data/Sites/server.thomasdye/TDSMDM/api/files/apps";
-$GLOBALS["AppiconsDir"] = "/Library/Server/Web/Data/Sites/server.thomasdye/TDSMDM/api/files/icons";
-$GLOBALS["hostName"] = "device.server.thomasdye.net";
+$GLOBALS["InstallPath"] = "../api";
+$GLOBALS["appDir"] = "../api/files/apps";
+$GLOBALS["AppiconsDir"] = "../api/files/icons";
+$GLOBALS["hostName"] = "YOUR HOST";
 $GLOBALS["apikey"] = "";
 $GLOBALS["BackEndHost"] = "http://127.0.0.1:6322";
 ```
@@ -86,8 +86,8 @@ with access to mircomdm on port 6322, etc.
 
 ```apache
 <VirtualHost *:443>
-    ServerName device.server.thomasdye.net:443
-    ServerAlias device.server2.thomasdye.net
+    ServerName HOSTNAME:443
+    ServerAlias HOST
     DirectoryIndex index.html
     SSLEngine on
     SSLCertificateFile ""
@@ -121,6 +121,10 @@ with access to mircomdm on port 6322, etc.
 
 </VirtualHost>
 ```
+
+## Front end changes 
+There are a few places in the front end where the URL is hard coded, just change the urls to the relevant ones for your server.
+
 
 ## About
 

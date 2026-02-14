@@ -129,10 +129,15 @@ $endpoints = [
     "v1/system/mapping/token" => "TDSLocationTracking_MapToken",
     "v1/system/mdm/APNS/{String}/token" => "MDM_APNSToken",
 
+
+
+    "v1/app/VisionPRO/appsAvailable" => "VisionPRO_App_Device_getAvailableApps",
+    
     "v1/app/{String}/appsAvailable" => "App_Device_getAvailableApps",
     //AppsInstalledOnDevice
     "v1/app/{String}/AppsInstalledOnDevice" => "App_Device_AppsInstalledOnDevice",
     "v1/app/{String}/device/getstate" => "App_Device_Device_getstate",
+
 
 
     // Auto enroll

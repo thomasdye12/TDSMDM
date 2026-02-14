@@ -55,7 +55,9 @@ function Apps_upload($otherinfo, $userinfo)
         $app["customVersion"] = time();
 
         // Check if the app already exists in the DB
-        $appdb = $MDMApps->findOne(["CFBundleIdentifier" => $app["CFBundleIdentifier"]]);
+        // $appdb = $MDMApps->findOne(["CFBundleIdentifier" => $app["CFBundleIdentifier"]]);
+        // add a check for DTPlatformName to make sure the app is for the same platform
+        $appdb = $MDMApps->findOne(["CFBundleIdentifier" => $app["CFBundleIdentifier"], "infolist.DTPlatformName" => $app["infolist"]["DTPlatformName"]]);
 
         if ($appdb) {
             $app["_id"] = $appdb["_id"];
@@ -466,7 +468,7 @@ function Apps_pushToDevice($appid, $app, $deviceid)
     //         <key>ManagementFlags</key>
     //         <integer>1</integer>
     //         <key>ManifestURL</key>
-    //         <string>https://device.server.thomasdye.net/TDSapi/v1/system/apps/download/</string>
+    //         <string>https:///TDSapi/v1/system/apps/download/</string>
     //         <key>RequestType</key>
     //         <string>InstallApplication</string>
     //       </dict>

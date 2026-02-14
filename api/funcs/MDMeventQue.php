@@ -10,7 +10,7 @@ function EventQueue_CreateEvent($udid,$data) {
     //         "command_uuid": "45696d51-178b-47b4-bfa9-5ff7a520487d",
     //         "command": {
     //             "request_type": "InstallApplication",
-    //             "manifest_url": "https://device.server.thomasdye.net/TDSapi/v1"
+    //             "manifest_url": "https:///TDSapi/v1"
     //         }
     //     }
     // }
