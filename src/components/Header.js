@@ -217,6 +217,7 @@ function Header() {
     apps: false,
     profiles: false,
     events: false,
+    ddm: false,
   });
 
   const [open, setOpen] = useState(false);
@@ -230,8 +231,9 @@ function Header() {
       const appsAccess = await userAccessToserviceSub("net.thomasdye.profilemanager.apps.all");
       const profilesAccess = await userAccessToserviceSub("net.thomasdye.profilemanager.profiles.all");
       const eventsAccess = await userAccessToserviceSub("net.thomasdye.profilemanager.events.all");
+      const ddmAccess = await userAccessToserviceSub("net.thomasdye.profilemanager.ddm.all");
 
-      setAccess({ devices: devicesAccess, apps: appsAccess, profiles: profilesAccess, events: eventsAccess });
+      setAccess({ devices: devicesAccess, apps: appsAccess, profiles: profilesAccess, events: eventsAccess, ddm: ddmAccess });
     };
     checkAccess();
   }, []);
@@ -242,6 +244,7 @@ function Header() {
     if (access.apps) items.push({ to: "/apps", label: "Apps" });
     if (access.profiles) items.push({ to: "/profiles", label: "Profiles" });
     if (access.events) items.push({ to: "/events", label: "Events" });
+    if (access.ddm) items.push({ to: "/ddm", label: "DDM" });
     return items;
   }, [access]);
 

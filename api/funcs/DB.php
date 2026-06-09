@@ -6,4 +6,7 @@ $MDMdevices = $database->selectCollection("devices");
 $MDMApps = $database->selectCollection("Apps");
 $MDMEventQueue = $database->selectCollection("EventQueue");
 $MDMProfiles = $database->selectCollection("Profiles");
-
+$MDMDDMDeclarations = $database->selectCollection("DDMDeclarations");
+$MDMDDMDeviceState = $database->selectCollection("DDMDeviceState");
+$MDMDDMStatusReports = $database->selectCollection("DDMStatusReports");
+$MDMDDMActivations = $database->selectCollection("DDMActivations");

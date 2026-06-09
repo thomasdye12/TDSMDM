@@ -126,6 +126,10 @@ with access to mircomdm on port 6322, etc.
 There are a few places in the front end where the URL is hard coded, just change the urls to the relevant ones for your server.
 
 
+## visionPro 
+VisionPro does not support mobileconfig install, so that is currently not supported.
+
+
 ## About
 
 This code is written by Thomas Dye, I am more then happy for you to use, modify, and distribute this code. I would appreciate it if you would give me credit for my work.

@@ -14,6 +14,7 @@ import AppList from './components/apps/AppList';
 import Events from './components/events/eventQueue';
 import ProfileList from './components/Profiles/ProfileList';
 import ProfileEdit from './components/Profiles/edit/ProfileEdit';
+import DDMDashboard from './components/ddm/DDMDashboard';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -30,6 +31,7 @@ const router = createBrowserRouter(
       <Route path="profiles" element={<ProfileList />} />
       <Route path="profiles/:profileid/edit" element={<ProfileEdit />} />
       <Route path="events" element={<Events />} />
+      <Route path="ddm" element={<DDMDashboard />} />
     </Route>
   )
 );

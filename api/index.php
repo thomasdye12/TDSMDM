@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
         // may also be using PUT, PATCH, HEAD etc
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
         header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
@@ -67,6 +67,19 @@ $endpoints = [
     "core/v1/commands/{String}/{String}" => "Core_sendDeviceInformationCommand",
     "core/v1/commands/{String}/null" => "Core_sendDeviceInformationCommandnull",
     "core/v1/incomingevent" => "Core_incomingevent",
+    "core/v1/ddm" => "DDM_Service",
+    "core/v1/ddm/tokens" => "DDM_Service_tokens",
+    "core/v1/ddm/declaration-items" => "DDM_Service_declarationItems",
+    "core/v1/ddm/status" => "DDM_Service_status",
+    "core/v1/ddm/declaration/{String}/{String}" => "DDM_Service_declaration",
+    "core/v1/tokens" => "DDM_Service_tokens",
+    "core/v1/declaration-items" => "DDM_Service_declarationItems",
+    "core/v1/status" => "DDM_Service_status",
+    "core/v1/declaration/{String}/{String}" => "DDM_Service_declaration",
+    "v1/ddm/admin/summary" => "DDM_Admin_summary",
+    "v1/ddm/admin/declarations" => "DDM_Admin_declarations",
+    "v1/ddm/admin/sync{POST}" => "DDM_Admin_sync",
+    "v1/ddm/admin/device/{String}/enable{POST}" => "DDM_Admin_enableDevice",
     "v1/sendcommand/{String}" => "sendDeviceCommand",
     // deviceCommands
     "v1/deviceCommands" => "deviceCommands",
@@ -208,10 +221,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         $matchedParams[] = file_get_contents('php://input');
     }
 }
+if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+    if (isset($_SERVER["CONTENT_TYPE"]) && strpos($_SERVER["CONTENT_TYPE"], "application/json") !== false) {
+        $matchedParams[] = json_decode(file_get_contents('php://input'), true);
+    } else {
+        $matchedParams[] = file_get_contents('php://input');
+    }
+}
 
 //  if the paht is not core/incomingevent thenw e need to auth
 $excludedEndpoints = [
     "core/v1/incomingevent",
+    "core/v1/ddm",
+    "core/v1/ddm/tokens",
+    "core/v1/ddm/declaration-items",
+    "core/v1/ddm/status",
+    "core/v1/ddm/declaration/{String}/{String}",
+    "core/v1/tokens",
+    "core/v1/declaration-items",
+    "core/v1/status",
+    "core/v1/declaration/{String}/{String}",
     "v1/system/mdm/enroll",
     "v1/system/apps/download/{String}",
     "v1/system/mdm/config",

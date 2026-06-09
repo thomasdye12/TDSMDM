@@ -66,9 +66,11 @@ function Profiles_upload($otherinfo, $userinfo) {
         // $ProfileArray = $plistArray;
         // $ProfileArray["edit"] = true;
         
-        echo json_encode($plistArray);
+        // echo json_encode($plistArray);
         if ($profile) {
-            $MDMProfiles->update(["PayloadUUID" => $id], $ProfileArray);
+            // $MDMProfiles->update(["PayloadUUID" => $id], $ProfileArray); // this throws an error 
+                $MDMProfiles->updateOne(["PayloadUUID" => $id], ['$set' => $ProfileArray]);
+
         } else {
             $MDMProfiles->insertOne(   $ProfileArray);
         }
