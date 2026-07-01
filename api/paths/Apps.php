@@ -528,13 +528,23 @@ function Apps_getForDevice($deviceid)
 function Apps_removeFromDevices($postdata)
 {
     global $MDMApps;
-    $app = $MDMApps->findOne(["_id" => new MongoDB\BSON\ObjectId($postdata["appId"])]);
+    if (empty($postdata["appId"]) || empty($postdata["deviceUdids"]) || !is_array($postdata["deviceUdids"])) {
+        return ["error" => "An app and at least one device are required"];
+    }
+
+    try {
+        $appId = new MongoDB\BSON\ObjectId($postdata["appId"]);
+    } catch (Exception $exception) {
+        return ["error" => "Invalid app ID"];
+    }
+
+    $app = $MDMApps->findOne(["_id" => $appId]);
     if ($app) {
         foreach ($postdata["deviceUdids"] as $device) {
             $command = array("udid" => $device, "request_type" => "RemoveApplication", "Identifier" => $app["CFBundleIdentifier"]);
             Core_sendDeviceCommandV2($command);
             //   remove the device from the app array
-            $MDMApps->updateOne(["_id" => new MongoDB\BSON\ObjectId($postdata["appId"])], ['$pull' => ["devices" => $device]]);
+            $MDMApps->updateOne(["_id" => $appId], ['$pull' => ["devices" => $device]]);
         }
 
         return ["success" => "App removed from devices"];

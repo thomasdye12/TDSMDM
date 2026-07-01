@@ -299,6 +299,12 @@ const PrimaryBtn = styled.button`
   }
 `;
 
+const DangerBtn = styled(PrimaryBtn)`
+  background: rgba(220, 53, 69, 0.94);
+
+  &:hover { background: rgba(190, 35, 51, 1); }
+`;
+
 const GhostBtn = styled.button`
   border: 1px solid rgba(0,0,0,0.12);
   border-radius: 12px;
@@ -359,6 +365,7 @@ function AppList() {
 
   // Push modal
   const [pushOpen, setPushOpen] = useState(false);
+  const [deploymentAction, setDeploymentAction] = useState("install");
   const [selectedApp, setSelectedApp] = useState(null);
   const [deviceSearch, setDeviceSearch] = useState("");
   const [targetMode, setTargetMode] = useState("missing"); // all | missing | installed | eligible
@@ -427,6 +434,7 @@ function AppList() {
   }, [computedTargets, targetMode, deviceSearch, devicesByUdid]);
 
   const openPush = (app) => {
+    setDeploymentAction("install");
     setSelectedApp(app);
     setTargetMode("missing");
     setDeviceSearch("");
@@ -435,6 +443,16 @@ function AppList() {
       .map((d) => d.udid)
       .filter((u) => !(app.devices || []).includes(u));
     setSelectedUdids(defaults);
+    setPushOpen(true);
+  };
+
+  const openRemove = (app) => {
+    const installed = Array.isArray(app.devices) ? app.devices : [];
+    setDeploymentAction("remove");
+    setSelectedApp(app);
+    setTargetMode("installed");
+    setDeviceSearch("");
+    setSelectedUdids(installed);
     setPushOpen(true);
   };
 
@@ -462,7 +480,7 @@ function AppList() {
     setSelectedUdids(list);
   };
 
-  const handleConfirmPush = async () => {
+  const handleConfirmDeployment = async () => {
     if (!selectedApp) return;
     if (selectedUdids.length === 0) {
       alert("Please select at least one device");
@@ -472,15 +490,18 @@ function AppList() {
     const payload = { appId: selectedApp.id, deviceUdids: selectedUdids };
 
     try {
-      await axiosInstance.post("/v1/apps/device/push", payload);
-      alert("App pushed successfully!");
+      const endpoint = deploymentAction === "remove"
+        ? "/v1/apps/device/remove"
+        : "/v1/apps/device/push";
+      await axiosInstance.post(endpoint, payload);
+      alert(deploymentAction === "remove" ? "App removal queued." : "App pushed successfully!");
       setPushOpen(false);
       setSelectedUdids([]);
       // optionally: refetchApps(); (only if your API updates installed list quickly)
       refetchApps();
     } catch (error) {
-      console.error("Error pushing app:", error);
-      alert("Failed to push app. Please try again.");
+      console.error("Error managing app:", error);
+      alert(`Failed to ${deploymentAction} app. Please try again.`);
     }
   };
 
@@ -538,6 +559,7 @@ function AppList() {
                     app={app}
                     devicesByUdid={devicesByUdid}
                     onPush={openPush}
+                    onRemove={openRemove}
                     onMoreInfo={openDetails}
                   />
                 ))
@@ -552,7 +574,7 @@ function AppList() {
         <Modal>
           <ModalHeader>
             <div>
-              <ModalTitle>Push app</ModalTitle>
+              <ModalTitle>{deploymentAction === "remove" ? "Remove app" : "Push app"}</ModalTitle>
               <Small>
                 {selectedApp?.CFBundleDisplayName || selectedApp?.name || "—"} •{" "}
                 {selectedApp?.CFBundleIdentifier || "—"}
@@ -565,7 +587,7 @@ function AppList() {
             <BodyLeft>
               <Small>Target selection</Small>
               <div style={{ marginTop: 8 }}>
-                <Segments>
+                {deploymentAction === "install" ? <Segments>
                   <Segment
                     $active={targetMode === "missing"}
                     onClick={() => onChangeTargetMode("missing")}
@@ -590,7 +612,9 @@ function AppList() {
                   >
                     All
                   </Segment>
-                </Segments>
+                </Segments> : <Segments>
+                  <Segment $active>Installed devices</Segment>
+                </Segments>}
               </div>
 
               <StatRow>
@@ -615,8 +639,14 @@ function AppList() {
               <div style={{ marginTop: 14 }}>
                 <Small>Quick actions</Small>
                 <ActionRow>
-                  <GhostBtn onClick={() => quickSelect("missing")}>Select missing</GhostBtn>
-                  <GhostBtn onClick={() => quickSelect("all")}>Select all</GhostBtn>
+                  {deploymentAction === "install" ? (
+                    <>
+                      <GhostBtn onClick={() => quickSelect("missing")}>Select missing</GhostBtn>
+                      <GhostBtn onClick={() => quickSelect("all")}>Select all</GhostBtn>
+                    </>
+                  ) : (
+                    <GhostBtn onClick={() => quickSelect("installed")}>Select installed</GhostBtn>
+                  )}
                   <GhostBtn onClick={() => setSelectedUdids([])}>Clear</GhostBtn>
                 </ActionRow>
               </div>
@@ -671,20 +701,25 @@ function AppList() {
             </BodyLeft>
 
             <BodyRight>
-              <Small>Push</Small>
+              <Small>{deploymentAction === "remove" ? "Remove" : "Push"}</Small>
               <div style={{ marginTop: 8 }}>
-                <PrimaryBtn
-                  onClick={handleConfirmPush}
+                {deploymentAction === "remove" ? <DangerBtn
+                  onClick={handleConfirmDeployment}
+                  disabled={!selectedApp || selectedUdids.length === 0}
+                >
+                  Remove from {selectedUdids.length} device{selectedUdids.length === 1 ? "" : "s"}
+                </DangerBtn> : <PrimaryBtn
+                  onClick={handleConfirmDeployment}
                   disabled={!selectedApp || selectedUdids.length === 0}
                 >
                   Push to {selectedUdids.length} device{selectedUdids.length === 1 ? "" : "s"}
-                </PrimaryBtn>
+                </PrimaryBtn>}
               </div>
 
               <div style={{ marginTop: 12 }}>
-                <Small>
-                  Tip: “Eligible” uses <code>mobileprovision.ProvisionedDevices</code> so you
-                  don’t accidentally target devices outside the profile.
+                <Small>{deploymentAction === "remove"
+                  ? "The MDM removal command deletes the managed app and its managed data from the selected devices."
+                  : <>Tip: “Eligible” uses <code>mobileprovision.ProvisionedDevices</code> so you don’t accidentally target devices outside the profile.</>}
                 </Small>
               </div>
             </BodyRight>

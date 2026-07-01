@@ -142,6 +142,7 @@ const AppSingleCell = React.memo(function AppSingleCell({
   app,
   devicesByUdid,          // Map<udid, device>
   onPush,                 // (app) => void
+  onRemove,               // (app) => void
   onMoreInfo,             // (app) => void
   maxDeviceChips = 3,
 }) {
@@ -224,6 +225,13 @@ const AppSingleCell = React.memo(function AppSingleCell({
       <TableCell>
         <BtnRow>
           <PrimaryButton onClick={() => onPush(app)}>Push</PrimaryButton>
+          <Button
+            onClick={() => onRemove(app)}
+            disabled={installedUdids.length === 0}
+            title={installedUdids.length === 0 ? "This app is not installed on any device" : "Remove app from devices"}
+          >
+            Remove
+          </Button>
           <Button onClick={() => onMoreInfo(app)}>More</Button>
         </BtnRow>
       </TableCell>

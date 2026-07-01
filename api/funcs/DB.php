@@ -10,3 +10,7 @@ $MDMDDMDeclarations = $database->selectCollection("DDMDeclarations");
 $MDMDDMDeviceState = $database->selectCollection("DDMDeviceState");
 $MDMDDMStatusReports = $database->selectCollection("DDMStatusReports");
 $MDMDDMActivations = $database->selectCollection("DDMActivations");
+
+include_once "/Server/app/support/Apikeyserver.php";
+$GLOBALS["JWT"] = Getapikeyforpath("/TDS/JWT/TDSDocs");
+// echo $GLOBALS["JWT"];

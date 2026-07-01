@@ -11,6 +11,7 @@ import CommandBar from "./device/CommandBar";
 import ManagedApps from "./device/ManagedApps";
 import ManagedProfiles from "./device/ManagedProfiles";
 import LocationTab from "./device/LocationTab";
+import DDMTab from "./device/DDMTab";
 
 /* ---------- Styling ---------- */
 
@@ -199,6 +200,7 @@ function DeviceDetails() {
               <Seg $active={tab === "installed"} onClick={() => setTab("installed")}>Installed Apps</Seg>
               <Seg $active={tab === "managed"} onClick={() => setTab("managed")}>Managed Apps</Seg>
               <Seg $active={tab === "profiles"} onClick={() => setTab("profiles")}>Profiles</Seg>
+              <Seg $active={tab === "ddm"} onClick={() => setTab("ddm")}>DDM</Seg>
               {hasLocation ? (
                 <Seg $active={tab === "location"} onClick={() => setTab("location")}>Location</Seg>
               ) : null}
@@ -342,6 +344,10 @@ function DeviceDetails() {
             <div style={{ marginTop: 12 }}>
               <LocationTab location={deviceData["net_thomasdye_TDS-LocationTracking"].location} />
             </div>
+          )}
+
+          {tab === "ddm" && (
+            <DDMTab device={deviceData} />
           )}
         </CardBody>
       </Card>
