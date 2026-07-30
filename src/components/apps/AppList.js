@@ -4,6 +4,7 @@ import axiosInstance from "../../utils/axios";
 import styled from "styled-components";
 import Upload from "./UploadApp";
 import AppSingleCell from "./AppSingleCell";
+import AppInstallSettingsEditor from "./AppInstallSettingsEditor";
 
 const fetchApps = async () => {
   const { data } = await axiosInstance.get("/v1/apps/get");
@@ -373,7 +374,7 @@ function AppList() {
 
   // Details modal
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [detailsTab, setDetailsTab] = useState("summary"); // summary | provision | entitlements | raw
+  const [detailsTab, setDetailsTab] = useState("summary"); // summary | provision | entitlements | install | raw
 
   const devicesByUdid = useMemo(() => {
     const m = new Map();
@@ -503,6 +504,11 @@ function AppList() {
       console.error("Error managing app:", error);
       alert(`Failed to ${deploymentAction} app. Please try again.`);
     }
+  };
+
+  const handleInstallSettingsSaved = (installSettings) => {
+    setSelectedApp((current) => current ? { ...current, installSettings } : current);
+    refetchApps();
   };
 
   if (isAppsLoading || isDevicesLoading) return <Page>Loading…</Page>;
@@ -753,6 +759,9 @@ function AppList() {
                 >
                   Entitlements
                 </Tab>
+                <Tab $active={detailsTab === "install"} onClick={() => setDetailsTab("install")}>
+                  Install Settings
+                </Tab>
                 <Tab $active={detailsTab === "raw"} onClick={() => setDetailsTab("raw")}>
                   Raw
                 </Tab>
@@ -803,6 +812,10 @@ function AppList() {
               <Pre>
                 {JSON.stringify(selectedApp?.mobileprovision?.Entitlements || {}, null, 2)}
               </Pre>
+            )}
+
+            {detailsTab === "install" && (
+              <AppInstallSettingsEditor app={selectedApp} onSaved={handleInstallSettingsSaved} />
             )}
 
             {detailsTab === "raw" && <Pre>{JSON.stringify(selectedApp || {}, null, 2)}</Pre>}

@@ -135,6 +135,8 @@ $kernel->addEndpoints([
     "v1/app/images/{String}" => ["func" => "Apps_getImage", "auth" => true],
     "v1/apps/device/push" => ["func" => "Apps_pushToDevices", "auth" => true],
     "v1/apps/device/remove{POST}" => ["func" => "Apps_removeFromDevices", "auth" => true],
+    "v1/apps/install-setting-functions{GET}" => ["func" => "Apps_installSettingFunctions", "auth" => true],
+    "v1/apps/{String}/install-settings{POST}" => ["func" => "Apps_saveInstallSettings", "auth" => true],
     "v1/apps/{String}/newinfo" => ["func" => "Apps_GetNewInfofromIPA", "auth" => true],
 
     "v1/profiles/get" => ["func" => "Profiles_get", "auth" => true],
