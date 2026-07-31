@@ -23,6 +23,10 @@ function EventQueue_Icon($event) {
         return "task_icon_push_apps_32_2x";
     }
 
+    if ($event["command"]["request_type"] == "InstallProvisioningProfile") {
+        return "task_icon_update_dep_profile_32_2x";
+    }
+
 
     // task_icon_update_dep_profile_32_2x - InstallProfile
     if ($event["command"]["request_type"] == "InstallProfile") {

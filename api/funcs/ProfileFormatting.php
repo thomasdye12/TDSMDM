@@ -49,7 +49,7 @@ class JsonToPlistConverter
             'loginWindowSettings' => ['isArray' => false, "PayloadType" => "com.apple.loginwindow"],
             'sharedDeviceSettings' => ['isArray' => false, "PayloadType" => "com.apple.shareddeviceconfiguration"],
             'restrictionsSettings' => ['isArray' => false, "PayloadType" => "com.apple.applicationaccess"],
-            // 'singleAppModeSettings' => ['isArray' => false, "PayloadType" => "com.apple.app.lock"],
+            'singleAppModeSettings' => ['isArray' => false, "PayloadType" => "com.apple.app.lock"],
         ];
 
         foreach ($sections as $key => $section) {
@@ -62,15 +62,26 @@ class JsonToPlistConverter
             }
         }
 
+        foreach (($this->data['customPayloads'] ?? []) as $payloadData) {
+            if (!is_array($payloadData) || empty($payloadData['PayloadType'])) {
+                continue;
+            }
+            $type = $payloadData['PayloadType'];
+            $array->appendChild($this->createGenericPayload($dom, $payloadData, $type, true));
+        }
+
         return $array;
     }
 
-    private function createGenericPayload($dom, $data, $type)
+    private function createGenericPayload($dom, $data, $type, $preserveEmpty = false)
     {
         $dict = $dom->createElement('dict');
 
-        foreach ($data as $key => $value) {
-            $this->appendKeyValuePair($dom, $dict, $key, $value, $type);
+        foreach ((array)$data as $key => $value) {
+            if (in_array($key, ['PayloadType', 'PayloadIdentifier', 'PayloadUUID', 'PayloadVersion'], true)) {
+                continue;
+            }
+            $this->appendKeyValuePair($dom, $dict, $key, $value, $type, $preserveEmpty);
         }
 
         $this->addStaticFields($dom, $dict, $type);
@@ -78,70 +89,86 @@ class JsonToPlistConverter
         return $dict;
     }
 
-    private function appendKeyValuePair($dom, &$dict, $key, $value, $type)
+    private function appendKeyValuePair($dom, &$dict, $key, $value, $type, $preserveEmpty = false)
     {
-        // Skip empty arrays/objects
-        if ((is_array($value) || is_object($value)) && count((array)$value) === 0) {
-            return; // ← do not append anything
+        if ($value === null || (!$preserveEmpty && (is_array($value) || is_object($value)) && count((array)$value) === 0)) {
+            return;
         }
-    
-        // Append key
+
         $dict->appendChild($dom->createElement('key', $key));
-    
+        $dict->appendChild($this->createValueElement($dom, $value, $type, $key));
+    }
+
+    private function createValueElement($dom, $value, $type = '', $key = '')
+    {
+        if (is_array($value) && isset($value['__tdsPlistType'])) {
+            $plistType = $value['__tdsPlistType'];
+            if ($plistType === 'data') {
+                $plistValue = (string)($value['value'] ?? '');
+                return $dom->createElement('data', preg_replace('/\s+/', '', $plistValue));
+            }
+            if ($plistType === 'date') {
+                $plistValue = (string)($value['value'] ?? '');
+                return $dom->createElement('date', $plistValue);
+            }
+            if ($plistType === 'dictionary') {
+                $container = $dom->createElement('dict');
+                foreach ((array)($value['value'] ?? []) as $itemKey => $itemValue) {
+                    if ($itemValue === null) {
+                        continue;
+                    }
+                    $container->appendChild($dom->createElement('key', (string)$itemKey));
+                    $container->appendChild($this->createValueElement($dom, $itemValue, $type, (string)$itemKey));
+                }
+                return $container;
+            }
+        }
         if (is_bool($value)) {
-            $dict->appendChild($dom->createElement($value ? 'true' : 'false'));
-    
-        } elseif (is_array($value) || is_object($value)) {
-    
-            $arrayElement = $dom->createElement('array');
-    
-            foreach ($value as $itemKey => $itemValue) {
-                if (is_array($itemValue) || is_object($itemValue)) {
-                    $subDict = $dom->createElement('dict');
-                    $this->appendKeyValuePair($dom, $subDict, $itemKey, $itemValue, $type);
-                    $arrayElement->appendChild($subDict);
-                    // if the key is not numeric, we need to add the key as well
-                } else if (!is_numeric($itemKey)) {
-                    // do key value     
-                    $this->appendKeyValuePair($dom, $arrayElement, $itemKey, $itemValue, $type);
-                } else {
-                    $arrayElement->appendChild($dom->createElement(
-                        'string',
-                        htmlspecialchars($itemValue)
-                    ));
+            return $dom->createElement($value ? 'true' : 'false');
+        }
+        if (is_int($value)) {
+            return $dom->createElement('integer', (string)$value);
+        }
+        if (is_float($value)) {
+            return $dom->createElement('real', (string)$value);
+        }
+        if (is_array($value) || is_object($value)) {
+            $items = (array)$value;
+            $isList = empty($items) || array_keys($items) === range(0, count($items) - 1);
+            $container = $dom->createElement($isList ? 'array' : 'dict');
+            if ($isList) {
+                foreach ($items as $item) {
+                    $container->appendChild($this->createValueElement($dom, $item, $type));
+                }
+            } else {
+                foreach ($items as $itemKey => $itemValue) {
+                    if ($itemValue === null) {
+                        continue;
+                    }
+                    $container->appendChild($dom->createElement('key', (string)$itemKey));
+                    $container->appendChild($this->createValueElement($dom, $itemValue, $type, (string)$itemKey));
                 }
             }
-    
-            $dict->appendChild($arrayElement);
-    
-        } elseif (is_numeric($value)) {
-            $dict->appendChild(
-                $dom->createElement(is_int($value) ? 'integer' : 'real', $value)
-            );
-    
-        } elseif (is_string($value)) {
-            if ($type === 'com.apple.security.root' && $key === 'PayloadContent') {
-                $dict->appendChild($dom->createElement('data', trim($value)));
-            } else {
-                $dict->appendChild($dom->createElement('string', htmlspecialchars($value)));
-            }
-    
-        } else {
-            $dict->appendChild($dom->createElement('string', htmlspecialchars((string)$value)));
+            return $container;
         }
+        if ($type === 'com.apple.security.root' && $key === 'PayloadContent') {
+            return $dom->createElement('data', preg_replace('/\s+/', '', (string)$value));
+        }
+        return $dom->createElement('string', (string)$value);
     }
-    
 
     private function addStaticFields($dom, &$dict, $type)
     {
         $dict->appendChild($dom->createElement('key', 'PayloadType'));
-        $dict->appendChild($dom->createElement('string', $type));
+        $dict->appendChild($dom->createElement('string', (string)$type));
 
         $dict->appendChild($dom->createElement('key', 'PayloadIdentifier'));
-        $dict->appendChild($dom->createElement('string', $this->data['PayloadIdentifier'] . '.' . uniqid()));
+        $identifierSuffix = preg_replace('/[^A-Za-z0-9.-]/', '-', strtolower($type));
+        $dict->appendChild($dom->createElement('string', $this->data['PayloadIdentifier'] . '.' . $identifierSuffix . '.' . uniqid()));
 
         $dict->appendChild($dom->createElement('key', 'PayloadUUID'));
-        $dict->appendChild($dom->createElement('string', uniqid()));
+        $uuid = function_exists('createProfileUUID') ? createProfileUUID() : strtoupper(uniqid());
+        $dict->appendChild($dom->createElement('string', $uuid));
 
         $dict->appendChild($dom->createElement('key', 'PayloadVersion'));
         $dict->appendChild($dom->createElement('integer', '1'));
@@ -150,18 +177,26 @@ class JsonToPlistConverter
     private function addRootKeys($dom, &$dict)
     {
         $rootKeys = [
-            'PayloadDisplayName' => htmlspecialchars($this->data['PayloadDisplayName']),
-            'PayloadIdentifier' => htmlspecialchars($this->data['PayloadIdentifier']),
-            'PayloadRemovalDisallowed' => false,
+            'PayloadDisplayName' => (string)($this->data['PayloadDisplayName'] ?? 'Configuration Profile'),
+            'PayloadIdentifier' => (string)($this->data['PayloadIdentifier'] ?? 'net.thomasdye.mdm.profile'),
+            'PayloadOrganization' => (string)($this->data['PayloadOrganization'] ?? 'TDS MDM'),
+            'PayloadDescription' => (string)($this->data['PayloadDescription'] ?? ''),
+            'PayloadRemovalDisallowed' => (bool)($this->data['PayloadRemovalDisallowed'] ?? false),
+            'PayloadScope' => (string)($this->data['PayloadScope'] ?? 'System'),
             'PayloadType' => 'Configuration',
             'PayloadUUID' => $this->data['PayloadUUID'],
             'PayloadVersion' => $this->data['PayloadVersion'] ?? 1
         ];
+
+        if (isset($this->data['DurationUntilRemoval']) && $this->data['DurationUntilRemoval'] !== '') {
+            $rootKeys['DurationUntilRemoval'] = (int)$this->data['DurationUntilRemoval'];
+        }
+        if (!empty($this->data['ConsentText']) && is_array($this->data['ConsentText'])) {
+            $rootKeys['ConsentText'] = $this->data['ConsentText'];
+        }
 
         foreach ($rootKeys as $key => $value) {
             $this->appendKeyValuePair($dom, $dict, $key, $value, 'root');
         }
     }
 }
-
-

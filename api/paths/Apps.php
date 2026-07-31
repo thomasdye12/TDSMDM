@@ -11,16 +11,104 @@ function Apps_get()
     $apps = $MDMApps->find();
     foreach ($apps as $app) {
         $app["id"] = (string)$app["_id"];
+        $app["lifecycleState"] = $app["lifecycleState"] ?? "active";
         $app["installSettings"] = Apps_normalizeInstallSettings($app["installSettings"] ?? null);
         $output[] = $app;
     }
-    // if the output is empty return an error
-    if (empty($output)) {
-        $output[] = [];
+    return  $output;
+}
+
+function Apps_setLifecycleState($id, $postdata, $userinfo)
+{
+    global $MDMApps;
+    $allowedStates = ["active", "disabled", "archived"];
+    $state = strtolower(trim((string)($postdata["state"] ?? "")));
+    if (!in_array($state, $allowedStates, true)) {
+        return ["error" => "State must be active, disabled, or archived"];
     }
 
+    try {
+        $appId = new MongoDB\BSON\ObjectId($id);
+    } catch (Throwable $exception) {
+        return ["error" => "Invalid app ID"];
+    }
 
-    return  $output;
+    $app = $MDMApps->findOne(["_id" => $appId]);
+    if (!$app) {
+        return ["error" => "App not found"];
+    }
+
+    $fields = [
+        "lifecycleState" => $state,
+        "lifecycleUpdatedAt" => time(),
+        "lifecycleUpdatedBy" => $userinfo["GeneratedUID"] ?? null,
+    ];
+    if ($state === "archived") {
+        $fields["archivedAt"] = time();
+    } else {
+        $fields["archivedAt"] = null;
+    }
+
+    $MDMApps->updateOne(["_id" => $appId], ['$set' => $fields]);
+    return ["success" => true, "state" => $state];
+}
+
+function Apps_platformFamily($app)
+{
+    $platform = strtolower((string)($app["infolist"]["DTPlatformName"] ?? ""));
+    if (strpos($platform, "appletv") !== false) {
+        return "tvos";
+    }
+    if (strpos($platform, "xros") !== false || strpos($platform, "vision") !== false) {
+        return "visionos";
+    }
+    if (strpos($platform, "macos") !== false) {
+        return "macos";
+    }
+    return "ios";
+}
+
+function Apps_deviceFamily($device)
+{
+    $model = strtolower((string)(($device["ModelName"] ?? "") . " " . ($device["Model"] ?? "")));
+    if (strpos($model, "apple tv") !== false || strpos($model, "appletv") !== false) {
+        return "tvos";
+    }
+    if (strpos($model, "vision") !== false || strpos($model, "reality") !== false) {
+        return "visionos";
+    }
+    if (strpos($model, "mac") !== false) {
+        return "macos";
+    }
+    return "ios";
+}
+
+function Apps_isCompatibleWithDevice($app, $device)
+{
+    $reasons = [];
+    $appFamily = Apps_platformFamily($app);
+    $deviceFamily = Apps_deviceFamily($device);
+    if ($appFamily !== $deviceFamily) {
+        $reasons[] = "Requires " . $appFamily . "; device is " . $deviceFamily;
+    }
+
+    $minimumVersion = (string)($app["infolist"]["MinimumOSVersion"] ?? "");
+    $deviceVersion = (string)($device["OSVersion"] ?? "");
+    if ($minimumVersion !== "" && $deviceVersion !== "" && version_compare($deviceVersion, $minimumVersion, "<")) {
+        $reasons[] = "Requires OS " . $minimumVersion . " or later";
+    }
+
+    $profile = Apps_toPlainArray($app["mobileprovision"] ?? []);
+    $provisionsAll = !empty($profile["ProvisionsAllDevices"]);
+    $provisionedDevices = (array)($profile["ProvisionedDevices"] ?? []);
+    if (!$provisionsAll && !empty($provisionedDevices) && !in_array($device["udid"] ?? "", $provisionedDevices, true)) {
+        $reasons[] = "Device is not in the provisioning profile";
+    }
+    if (!$provisionsAll && empty($provisionedDevices) && !empty($profile)) {
+        $reasons[] = "Profile does not allow direct device installation";
+    }
+
+    return ["compatible" => empty($reasons), "reasons" => $reasons];
 }
 
 function Apps_defaultInstallSettings()
@@ -427,7 +515,9 @@ function Apps_upload($otherinfo, $userinfo)
 
         if ($app["mobileprovision"] != false) {
             $app["mobileprovision"] = Apps_processMobileProvision($app["mobileprovision"]);
+            $app["embeddedMobileprovision"] = $app["mobileprovision"];
         }
+        $app["currentProvisioningProfileId"] = null;
 
         Apps_removeUnzipped($app["unzipped"]);
         unset($app["unzipped"]);
@@ -803,19 +893,37 @@ function Apps_Createmanifest($id)
 function  Apps_pushToDevices($postdata, $userinfo)
 {
     global $MDMApps;
-    $app = $MDMApps->findOne(["_id" => new MongoDB\BSON\ObjectId($postdata["appId"])]);
+    if (empty($postdata["appId"]) || empty($postdata["deviceUdids"]) || !is_array($postdata["deviceUdids"])) {
+        return ["error" => "An app and at least one device are required"];
+    }
+    try {
+        $appId = new MongoDB\BSON\ObjectId($postdata["appId"]);
+    } catch (Throwable $exception) {
+        return ["error" => "Invalid app ID"];
+    }
+    $app = $MDMApps->findOne(["_id" => $appId]);
     if ($app) {
+        $queued = [];
+        $failed = [];
         foreach ($postdata["deviceUdids"] as $device) {
-            APNS_SendAPPNotifciation($device,$app);
             $deviceid = $device;
             $result = Apps_pushToDevice($postdata["appId"], $app, $deviceid);
-            $MDMApps->updateOne(["_id" => new MongoDB\BSON\ObjectId($postdata["appId"])], ['$addToSet' => ["devices" => $deviceid]]);
             if (isset($result["error"])) {
-                return $result;
+                $failed[] = ["udid" => $deviceid, "error" => $result["error"]];
+                continue;
             }
-            echo json_encode($result);
+            APNS_SendAPPNotifciation($device, $app);
+            $MDMApps->updateOne(
+                ["_id" => $appId],
+                ['$addToSet' => ["devices" => $deviceid]]
+            );
+            $queued[] = $deviceid;
         }
-        return ["success" => "App pushed to devices"];
+        return [
+            "success" => empty($failed),
+            "queuedDeviceUdids" => $queued,
+            "failed" => $failed,
+        ];
     }
     return ["error" => "App not found"];
 }
@@ -825,6 +933,19 @@ function  Apps_pushToDevices($postdata, $userinfo)
 function Apps_pushToDevice($appid, $app, $deviceid)
 {
     global $MDMdevices;
+
+    if (($app["lifecycleState"] ?? "active") !== "active") {
+        return ["error" => "Disabled or archived apps cannot be installed"];
+    }
+
+    $targetDevice = $MDMdevices->findOne(["udid" => $deviceid]);
+    if (!$targetDevice) {
+        return ["error" => "Device not found"];
+    }
+    $compatibility = Apps_isCompatibleWithDevice($app, $targetDevice);
+    if (!$compatibility["compatible"]) {
+        return ["error" => implode("; ", $compatibility["reasons"])];
+    }
 
     // //  add a check if the device is a Mac, so we first remove the app from the device otherwise it will just add a copy of the app to the device
     // global $MDMdevices;
@@ -840,9 +961,24 @@ function Apps_pushToDevice($appid, $app, $deviceid)
 
 
 
+    // A separately managed provisioning profile must reach the device before the
+    // app install command. MicroMDM preserves command queue order for the device.
+    if (!empty($app["currentProvisioningProfileId"]) && function_exists("AppProvisioning_deploy")) {
+        $provisioningResult = AppProvisioning_deploy(
+            $appid,
+            ["deviceUdids" => [$deviceid]],
+            ["GeneratedUID" => $GLOBALS["userinfo"]["GeneratedUID"] ?? "system"]
+        );
+        if (isset($provisioningResult["error"]) || !empty($provisioningResult["failed"])) {
+            return [
+                "error" => $provisioningResult["error"] ?? "Could not queue the provisioning profile for this device",
+            ];
+        }
+    }
+
     $url = "https://".$GLOBALS["hostName"]."/TDSapi/v1/system/apps/download/" . $appid;
     $installSettings = Apps_normalizeInstallSettings($app["installSettings"] ?? null);
-    $device = $MDMdevices->findOne(["udid" => $deviceid]) ?? [];
+    $device = $targetDevice;
     $user = Apps_findUserForDevice($device);
     $data = array("udid" => $deviceid, "request_type" => "InstallApplication", "manifest_url" => $url, "management_flags" => $installSettings["managementFlags"], "change_management_state" => $installSettings["changeManagementState"], "iOSApp" => $installSettings["iOSApp"]);
     //     <plist version="1.0">

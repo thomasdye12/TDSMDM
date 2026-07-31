@@ -8,13 +8,13 @@ const Tr = styled.tr`
   transition: background 0.15s ease;
 
   &:hover {
-    background: rgba(0, 123, 255, 0.06);
+    background: var(--accent-soft);
   }
 `;
 
 const Td = styled.td`
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
   font-size: 14px;
 `;
@@ -45,14 +45,14 @@ const Chip = styled.span`
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--surface-soft);
 `;
 
 const Muted = styled.span`
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--surface-soft);
   opacity: 0.75;
 `;
 
@@ -66,34 +66,34 @@ const BtnRow = styled.div`
 const Button = styled.button`
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: white;
+  border: 1px solid var(--border);
+  background: var(--surface);
   cursor: pointer;
   font-weight: 900;
   font-size: 13px;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--surface-hover);
   }
 `;
 
 const PrimaryBtn = styled(Button)`
-  background: rgba(0, 123, 255, 0.92);
+  background: var(--accent);
   color: white;
   border-color: transparent;
 
   &:hover {
-    background: rgba(0, 123, 255, 1);
+    background: var(--accent-hover);
   }
 `;
 
 const DangerBtn = styled(Button)`
-  background: rgba(220, 53, 69, 0.92);
+  background: var(--bad);
   color: white;
   border-color: transparent;
 
   &:hover {
-    background: rgba(220, 53, 69, 1);
+    filter: brightness(0.88);
   }
 `;
 
@@ -101,8 +101,8 @@ const DangerBtn = styled(Button)`
 const EditLink = styled(Link)`
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(40, 167, 69, 0.92);
+  border: 1px solid var(--border);
+  background: var(--text);
   color: white;
   cursor: pointer;
   font-weight: 900;
@@ -112,7 +112,7 @@ const EditLink = styled(Link)`
   align-items: center;
 
   &:hover {
-    background: rgba(40, 167, 69, 1);
+    background: #242424;
   }
 `;
 

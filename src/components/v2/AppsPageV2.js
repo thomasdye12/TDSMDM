@@ -3,8 +3,10 @@ import { useQuery } from "react-query";
 import styled from "styled-components";
 import {
   IoAppsOutline,
+  IoArchiveOutline,
   IoCheckmarkCircle,
   IoCloudUploadOutline,
+  IoEyeOffOutline,
   IoInformationCircleOutline,
   IoPhonePortraitOutline,
   IoSearch,
@@ -14,6 +16,7 @@ import {
 import axiosInstance from "../../utils/axios";
 import Upload from "../apps/UploadApp";
 import AppInstallSettingsEditor from "../apps/AppInstallSettingsEditor";
+import ProvisioningProfileManager from "../apps/ProvisioningProfileManager";
 
 const fetchApps = async () => {
   const { data } = await axiosInstance.get("/v1/apps/get");
@@ -137,8 +140,8 @@ const StatLabel = styled.div`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr));
+  gap: 12px;
 `;
 
 const Card = styled.article`
@@ -147,7 +150,15 @@ const Card = styled.article`
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
-  padding: 12px;
+  padding: 16px;
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 2px 0;
 `;
 
 const CardTop = styled.div`
@@ -196,8 +207,12 @@ const Bundle = styled.div`
 
 const MetaGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(80px, 0.7fr) minmax(180px, 1.5fr) minmax(90px, 0.8fr);
   gap: 8px;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const Meta = styled.div`
@@ -220,7 +235,8 @@ const MetaValue = styled.div`
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: ${({ $wrap }) => ($wrap ? "normal" : "nowrap")};
+  line-height: 1.35;
 `;
 
 const PillRow = styled.div`
@@ -244,7 +260,7 @@ const Pill = styled.span`
 
 const ButtonRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 8px;
 
   @media (max-width: 420px) {
@@ -279,6 +295,17 @@ const Empty = styled.div`
   color: var(--text-muted);
   background: var(--surface);
   text-align: center;
+`;
+
+const ErrorBox = styled.div`
+  padding: 11px 12px;
+  color: var(--bad);
+  white-space: pre-wrap;
+  background: var(--bad-soft);
+  border: 1px solid var(--bad);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
 `;
 
 const Overlay = styled.div`
@@ -389,6 +416,55 @@ function getVersion(app) {
   return app.CFBundleShortVersionString || app.version || app.infolist?.CFBundleShortVersionString || "-";
 }
 
+function getLifecycleState(app) {
+  return app.lifecycleState || "active";
+}
+
+function platformFamilyForApp(app) {
+  const platform = (app.infolist?.DTPlatformName || "").toLowerCase();
+  if (platform.includes("appletv")) return "tvos";
+  if (platform.includes("xros") || platform.includes("vision")) return "visionos";
+  if (platform.includes("macos")) return "macos";
+  return "ios";
+}
+
+function platformFamilyForDevice(device) {
+  const model = `${device.ModelName || ""} ${device.Model || ""}`.toLowerCase();
+  if (model.includes("apple tv") || model.includes("appletv")) return "tvos";
+  if (model.includes("vision") || model.includes("reality")) return "visionos";
+  if (model.includes("mac")) return "macos";
+  return "ios";
+}
+
+function compareVersions(left, right) {
+  const a = String(left || "").split(".").map((part) => Number(part) || 0);
+  const b = String(right || "").split(".").map((part) => Number(part) || 0);
+  for (let index = 0; index < Math.max(a.length, b.length); index += 1) {
+    if ((a[index] || 0) !== (b[index] || 0)) return (a[index] || 0) - (b[index] || 0);
+  }
+  return 0;
+}
+
+function appCompatibility(app, device) {
+  const reasons = [];
+  if (platformFamilyForApp(app) !== platformFamilyForDevice(device)) {
+    reasons.push(`Requires ${platformFamilyForApp(app)}`);
+  }
+  const minimum = app.infolist?.MinimumOSVersion;
+  if (minimum && device.OSVersion && compareVersions(device.OSVersion, minimum) < 0) {
+    reasons.push(`Requires OS ${minimum}+`);
+  }
+  const profile = app.mobileprovision || {};
+  const provisioned = Array.isArray(profile.ProvisionedDevices) ? profile.ProvisionedDevices : [];
+  if (!profile.ProvisionsAllDevices && provisioned.length && !provisioned.includes(device.udid)) {
+    reasons.push("Not provisioned");
+  }
+  if (!profile.ProvisionsAllDevices && !provisioned.length && Object.keys(profile).length) {
+    reasons.push("Not directly distributable");
+  }
+  return { compatible: reasons.length === 0, reasons };
+}
+
 function getIconUrl(app) {
   if (app.iconURL) return app.iconURL;
   if (!app.icon) return "";
@@ -434,6 +510,8 @@ function AppsPageV2() {
   const [selectedUdids, setSelectedUdids] = useState([]);
   const [deviceSearch, setDeviceSearch] = useState("");
   const [busy, setBusy] = useState(false);
+  const [lifecycleBusy, setLifecycleBusy] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const devicesByUdid = useMemo(() => {
     const map = new Map();
@@ -443,10 +521,20 @@ function AppsPageV2() {
 
   const filteredApps = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return apps;
     return apps.filter((app) =>
+      getLifecycleState(app) === "active" &&
+      (!q ||
       [getAppName(app), getBundleId(app), getVersion(app), app.infolist?.DTPlatformName]
-        .some((value) => value?.toLowerCase().includes(q))
+        .some((value) => value?.toLowerCase().includes(q)))
+    );
+  }, [apps, search]);
+
+  const hiddenApps = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return apps.filter((app) =>
+      getLifecycleState(app) !== "active" &&
+      (!q || [getAppName(app), getBundleId(app), getVersion(app)]
+        .some((value) => value?.toLowerCase().includes(q)))
     );
   }, [apps, search]);
 
@@ -460,24 +548,52 @@ function AppsPageV2() {
     return new Set(Array.isArray(list) ? list : []);
   }, [selectedApp]);
 
+  const compatibleSet = useMemo(() => {
+    if (!selectedApp) return new Set();
+    return new Set(
+      devices
+        .filter((device) => appCompatibility(selectedApp, device).compatible)
+        .map((device) => device.udid)
+    );
+  }, [devices, selectedApp]);
+
   const targetGroups = useMemo(() => {
-    const all = devices.map((device) => device.udid);
+    const all = devices.map((device) => device.udid).filter((udid) => compatibleSet.has(udid));
     const installed = all.filter((udid) => installedSet.has(udid));
     const missing = all.filter((udid) => !installedSet.has(udid));
-    const eligible = all.filter((udid) => eligibleSet.has(udid));
+    const eligible = selectedApp?.mobileprovision?.ProvisionsAllDevices
+      ? all
+      : all.filter((udid) => eligibleSet.has(udid));
     return { all, installed, missing, eligible };
-  }, [devices, eligibleSet, installedSet]);
+  }, [compatibleSet, devices, eligibleSet, installedSet, selectedApp]);
 
   const getTargetGroupsForApp = (app) => {
-    const all = devices.map((device) => device.udid);
+    const all = devices
+      .filter((device) => appCompatibility(app, device).compatible)
+      .map((device) => device.udid);
     const appInstalled = new Set(Array.isArray(app?.devices) ? app.devices : []);
     const appEligible = new Set(Array.isArray(app?.mobileprovision?.ProvisionedDevices) ? app.mobileprovision.ProvisionedDevices : []);
     return {
       all,
       installed: all.filter((udid) => appInstalled.has(udid)),
       missing: all.filter((udid) => !appInstalled.has(udid)),
-      eligible: all.filter((udid) => appEligible.has(udid)),
+      eligible: app?.mobileprovision?.ProvisionsAllDevices ? all : all.filter((udid) => appEligible.has(udid)),
     };
+  };
+
+  const setLifecycle = async (app, state) => {
+    setLifecycleBusy(app.id);
+    setActionError("");
+    try {
+      const { data } = await axiosInstance.post(`/v1/apps/${app.id}/lifecycle`, { state });
+      if (data?.error) throw new Error(data.error);
+      if (selectedApp?.id === app.id) closeModal();
+      await refetch();
+    } catch (error) {
+      setActionError(error?.response?.data?.error || error.message || "The app could not be updated.");
+    } finally {
+      setLifecycleBusy("");
+    }
   };
 
   const visibleUdids = useMemo(() => {
@@ -508,6 +624,7 @@ function AppsPageV2() {
     setModal(action);
     setTargetMode(mode);
     setDeviceSearch("");
+    setActionError("");
     setSelectedUdids(groups[mode] || []);
   };
 
@@ -526,6 +643,7 @@ function AppsPageV2() {
     setModal(null);
     setSelectedApp(null);
     setSelectedUdids([]);
+    setActionError("");
   };
 
   const handleInstallSettingsSaved = (installSettings) => {
@@ -536,13 +654,20 @@ function AppsPageV2() {
   const confirmDeployment = async () => {
     if (!selectedApp || selectedUdids.length === 0) return;
     setBusy(true);
+    setActionError("");
     try {
-      await axiosInstance.post(modal === "remove" ? "/v1/apps/device/remove" : "/v1/apps/device/push", {
+      const { data } = await axiosInstance.post(modal === "remove" ? "/v1/apps/device/remove" : "/v1/apps/device/push", {
         appId: selectedApp.id,
         deviceUdids: selectedUdids,
       });
+      if (data?.error) throw new Error(data.error);
+      if (Array.isArray(data?.failed) && data.failed.length > 0) {
+        throw new Error(data.failed.map((failure) => `${failure.udid}: ${failure.error || failure.message}`).join("\n"));
+      }
       closeModal();
       refetch();
+    } catch (error) {
+      setActionError(error?.response?.data?.error || error.message || "The deployment could not be queued.");
     } finally {
       setBusy(false);
     }
@@ -585,6 +710,7 @@ function AppsPageV2() {
             <StatLabel>Expiring soon</StatLabel>
           </Stat>
         </SearchBand>
+        {actionError ? <ErrorBox role="alert">{actionError}</ErrorBox> : null}
 
         {filteredApps.length === 0 ? (
           <Empty>No apps match this search.</Empty>
@@ -623,7 +749,7 @@ function AppsPageV2() {
                     </Meta>
                     <Meta>
                       <MetaLabel>Uploaded</MetaLabel>
-                      <MetaValue>{formatTs(app.uploaded)}</MetaValue>
+                      <MetaValue $wrap>{formatTs(app.uploaded)}</MetaValue>
                     </Meta>
                     <Meta>
                       <MetaLabel>Eligible</MetaLabel>
@@ -642,11 +768,29 @@ function AppsPageV2() {
                     </Button>
                     <Button onClick={() => { setSelectedApp(app); setModal("details"); }}>
                       <IoInformationCircleOutline />
-                      More
+                      Provision
                     </Button>
                     <Button onClick={() => { setSelectedApp(app); setModal("settings"); }}>
                       <IoSettingsOutline />
                       Settings
+                    </Button>
+                    <Button
+                      disabled={lifecycleBusy === app.id}
+                      onClick={() => setLifecycle(app, "disabled")}
+                    >
+                      <IoEyeOffOutline />
+                      Disable
+                    </Button>
+                    <Button
+                      disabled={lifecycleBusy === app.id}
+                      onClick={() => {
+                        if (window.confirm(`Archive ${getAppName(app)}? It can be restored later.`)) {
+                          setLifecycle(app, "archived");
+                        }
+                      }}
+                    >
+                      <IoArchiveOutline />
+                      Archive
                     </Button>
                   </ButtonRow>
                 </Card>
@@ -654,6 +798,52 @@ function AppsPageV2() {
             })}
           </Grid>
         )}
+
+        {hiddenApps.length > 0 ? (
+          <>
+            <SectionHeader>
+              <div>
+                <Kicker>Hidden apps</Kicker>
+                <Sub>Disabled and archived apps stay recoverable and cannot be installed.</Sub>
+              </div>
+              <Pill>{hiddenApps.length}</Pill>
+            </SectionHeader>
+            <Grid>
+              {hiddenApps.map((app) => (
+                <Card key={app.id}>
+                  <CardTop>
+                    <AppIconTile app={app} />
+                    <div style={{ minWidth: 0 }}>
+                      <AppName>{getAppName(app)}</AppName>
+                      <Bundle>{getBundleId(app)}</Bundle>
+                      <PillRow style={{ marginTop: 7 }}>
+                        <Pill>{getLifecycleState(app)}</Pill>
+                        <Pill>{app.infolist?.DTPlatformName || "iOS"}</Pill>
+                      </PillRow>
+                    </div>
+                  </CardTop>
+                  <ButtonRow>
+                    <Button
+                      $primary
+                      disabled={lifecycleBusy === app.id}
+                      onClick={() => setLifecycle(app, "active")}
+                    >
+                      Restore
+                    </Button>
+                    {getLifecycleState(app) === "disabled" ? (
+                      <Button
+                        disabled={lifecycleBusy === app.id}
+                        onClick={() => setLifecycle(app, "archived")}
+                      >
+                        Archive
+                      </Button>
+                    ) : null}
+                  </ButtonRow>
+                </Card>
+              ))}
+            </Grid>
+          </>
+        ) : null}
       </Shell>
 
       <Overlay $open={modal === "install" || modal === "remove"}>
@@ -667,15 +857,25 @@ function AppsPageV2() {
             <Button onClick={closeModal}>Close</Button>
           </ModalHeader>
           <ModalBody>
+            {actionError ? <ErrorBox role="alert" style={{ marginBottom: 12 }}>{actionError}</ErrorBox> : null}
             <ModalGrid>
               <div style={{ display: "grid", gap: 10, alignContent: "start" }}>
                 {modal === "install" ? (
-                  <Segments>
-                    <Segment $active={targetMode === "missing"} onClick={() => changeMode("missing")}>Missing</Segment>
-                    <Segment $active={targetMode === "eligible"} onClick={() => changeMode("eligible")}>Eligible</Segment>
-                    <Segment $active={targetMode === "installed"} onClick={() => changeMode("installed")}>Installed</Segment>
-                    <Segment $active={targetMode === "all"} onClick={() => changeMode("all")}>All</Segment>
-                  </Segments>
+                  <>
+                    <Segments>
+                      <Segment $active={targetMode === "missing"} onClick={() => changeMode("missing")}>Missing</Segment>
+                      <Segment $active={targetMode === "eligible"} onClick={() => changeMode("eligible")}>Eligible</Segment>
+                      <Segment $active={targetMode === "installed"} onClick={() => changeMode("installed")}>Installed</Segment>
+                      <Segment $active={targetMode === "all"} onClick={() => changeMode("all")}>Compatible</Segment>
+                    </Segments>
+                    <ButtonRow>
+                      <Button onClick={() => setSelectedUdids(targetGroups.all)}>Select all compatible</Button>
+                      <Button onClick={() => setSelectedUdids([])}>Unselect all</Button>
+                    </ButtonRow>
+                    <Sub>
+                      {targetGroups.all.length} of {devices.length} devices support this app’s platform, OS version and provisioning profile.
+                    </Sub>
+                  </>
                 ) : (
                   <Segments>
                     <Segment $active>Installed</Segment>
@@ -739,14 +939,18 @@ function AppsPageV2() {
         <Modal>
           <ModalHeader>
             <div>
-              <Kicker>App details</Kicker>
+              <Kicker>Provisioning profile</Kicker>
               <Title style={{ fontSize: 18 }}>{selectedApp ? getAppName(selectedApp) : "App"}</Title>
               <Sub>{selectedApp ? getBundleId(selectedApp) : ""}</Sub>
             </div>
             <Button onClick={closeModal}>Close</Button>
           </ModalHeader>
           <ModalBody>
-            <Pre>{JSON.stringify(selectedApp || {}, null, 2)}</Pre>
+            <ProvisioningProfileManager
+              app={selectedApp}
+              devices={devices}
+              onUpdated={refetch}
+            />
           </ModalBody>
         </Modal>
       </Overlay>

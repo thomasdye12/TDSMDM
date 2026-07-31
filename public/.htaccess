@@ -1,8 +1,10 @@
 <IfModule mod_rewrite.c>
-    RewriteEngine on
+    DirectoryIndex index.php
+    RewriteEngine On
 
+    RewriteRule ^index\.html$ index.php [QSA,L]
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^(.*)$ index.html [QSA,L]
+    RewriteRule ^ index.php [QSA,L]
 
-  </IfModule>
+</IfModule>

@@ -6,15 +6,16 @@ const Button = styled.button`
   position: fixed;
   bottom: 20px;
   right: 20px;
-  padding: 10px 20px;
-  background-color: #007bff;
+  min-height: 42px;
+  padding: 0 18px;
+  background: var(--accent);
   color: white;
-  border: none;
-  border-radius: 5px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
   cursor: pointer;
 
   &:hover {
-    background-color: #0056b3;
+    background: var(--accent-strong);
   }
 `;
 

@@ -22,15 +22,15 @@ const fetchDevices = async () => {
 const Page = styled.div`
   width: 100%;
   min-height: 100vh;
-  background: #f6f7fb;
+  background: var(--surface-muted);
   padding: 22px;
 `;
 
 const Card = styled.div`
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
   overflow: hidden;
 `;
 
@@ -40,8 +40,8 @@ const TopBar = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  background: linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0.98));
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
 `;
 
 const Left = styled.div`
@@ -71,13 +71,13 @@ const Search = styled.input`
   width: 360px;
   max-width: 70vw;
   padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
   outline: none;
 
   &:focus {
-    border-color: rgba(0, 123, 255, 0.6);
-    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12);
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
   }
 `;
 
@@ -104,9 +104,9 @@ const Th = styled.th`
   font-size: 12px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: rgba(0,0,0,0.65);
-  background: #fbfbfd;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 `;
 
@@ -131,8 +131,8 @@ const Overlay = styled.div`
 
 const Modal = styled.div`
   width: min(980px, 96vw);
-  background: white;
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 22px 70px rgba(0,0,0,0.35);
 `;
@@ -143,7 +143,7 @@ const ModalHeader = styled.div`
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid var(--border);
 `;
 
 const ModalTitle = styled.div`
@@ -192,8 +192,8 @@ const Small = styled.div`
 
 const Segments = styled.div`
   display: inline-flex;
-  border: 1px solid rgba(0,0,0,0.12);
-  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 `;
 
@@ -201,13 +201,13 @@ const Segment = styled.button`
   border: 0;
   padding: 10px 12px;
   cursor: pointer;
-  background: ${({ $active }) => ($active ? "rgba(0,123,255,0.92)" : "white")};
-  color: ${({ $active }) => ($active ? "white" : "rgba(0,0,0,0.75)")};
+  background: ${({ $active }) => ($active ? "var(--accent)" : "var(--surface)")};
+  color: ${({ $active }) => ($active ? "white" : "var(--text)")};
   font-weight: 900;
   font-size: 12px;
 
   &:hover {
-    background: ${({ $active }) => ($active ? "rgba(0,123,255,1)" : "rgba(0,0,0,0.03)")};
+    background: ${({ $active }) => ($active ? "var(--accent-hover)" : "var(--surface-hover)")};
   }
 `;
 
@@ -219,9 +219,9 @@ const StatRow = styled.div`
 `;
 
 const Stat = styled.div`
-  border: 1px solid rgba(0,0,0,0.08);
-  background: rgba(0,0,0,0.02);
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
   min-width: 160px;
 
@@ -232,13 +232,13 @@ const Stat = styled.div`
 const DeviceSearch = styled.input`
   width: 100%;
   padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
   outline: none;
 
   &:focus {
-    border-color: rgba(0, 123, 255, 0.6);
-    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12);
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
   }
 `;
 
@@ -288,12 +288,12 @@ const PrimaryBtn = styled.button`
   border: 0;
   border-radius: 12px;
   padding: 11px 14px;
-  background: rgba(0, 123, 255, 0.92);
+  background: var(--accent);
   color: white;
   font-weight: 900;
   cursor: pointer;
 
-  &:hover { background: rgba(0, 123, 255, 1); }
+  &:hover { background: var(--accent-hover); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
@@ -303,14 +303,14 @@ const DangerBtn = styled(PrimaryBtn)`
 `;
 
 const GhostBtn = styled.button`
-  border: 1px solid rgba(0,0,0,0.12);
-  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   padding: 11px 14px;
-  background: white;
+  background: var(--surface);
   font-weight: 900;
   cursor: pointer;
 
-  &:hover { background: rgba(0,0,0,0.03); }
+  &:hover { background: var(--surface-hover); }
 `;
 
 /* ---------- Component ---------- */
@@ -593,9 +593,10 @@ function ProfileList() {
               </div>
 
               <ActionRow>
+                <GhostBtn onClick={() => quickSelect("all")}>Select all devices</GhostBtn>
                 <GhostBtn onClick={() => quickSelect("installed")}>Select installed</GhostBtn>
                 <GhostBtn onClick={() => quickSelect("missing")}>Select missing</GhostBtn>
-                <GhostBtn onClick={() => setSelectedUdids([])}>Clear</GhostBtn>
+                <GhostBtn onClick={() => setSelectedUdids([])}>Unselect all</GhostBtn>
               </ActionRow>
             </BodyRight>
           </ModalBody>

@@ -79,6 +79,24 @@ Core_incomingevents.php has some basic code for logging.
 For the backend to work, you need to have a working instance of Micro MDM running on the server. This is what the backend uses to communicate with the devices.[https://github.com/micromdm/micromdm](https://github.com/micromdm/micromdm)
 There is info on there about getting push certs and stuff like that.
 
+### Declarative device management
+
+Start MicroMDM with the declaration service base URL (including the trailing slash):
+
+```text
+-dm https://HOSTNAME/TDSapi/core/v1/ddm/
+```
+
+In the TDS MDM DDM page, run **Sync declarations** after changing apps, profiles, or status subscriptions. Then use **Enable DDM** on the target device. The default activation only enables the status-subscription configuration; synced apps and profiles are not globally assigned.
+
+### Updating the Apple profile catalog
+
+The Apple Payloads editor is generated from Apple's `device-management` release schemas. After checking out or downloading a newer release, regenerate it with:
+
+```sh
+python3 scripts/generate-apple-profile-catalog.py /path/to/apple-device-management src/data/appleProfileSchemas.json
+```
+
 ## Apache Config
 
 This is the apache config that I use to get this to work.

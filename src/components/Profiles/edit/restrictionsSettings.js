@@ -2,32 +2,32 @@ import React, { useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div`margin-bottom: 20px;`;
-const Title = styled.h2`margin-bottom: 20px; font-size: 24px; color: #333;`;
+const Title = styled.h2`margin-bottom: 20px; font-size: 24px; color: var(--text);`;
 const FormGroup = styled.div`margin-bottom: 15px;`;
-const Label = styled.label`display: block; margin-bottom: 8px; font-size: 16px; color: #555;`;
+const Label = styled.label`display: block; margin-bottom: 8px; font-size: 16px; color: var(--text-muted);`;
 const Input = styled.input`
-  width: 100%; padding: 10px; font-size: 16px; color: #333;
-  border: 1px solid #ccc; border-radius: 4px; outline: none; transition: border-color 0.3s;
-  &:focus { border-color: #007bff; }
+  width: 100%; padding: 10px; font-size: 16px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); outline: none; transition: border-color 0.3s;
+  &:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
 `;
 const Select = styled.select`
-  width: 100%; padding: 10px; font-size: 16px; color: #333;
-  border: 1px solid #ccc; border-radius: 4px; outline: none; transition: border-color 0.3s;
-  &:focus { border-color: #007bff; }
+  width: 100%; padding: 10px; font-size: 16px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); outline: none; transition: border-color 0.3s;
+  &:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
 `;
 const Toggle = styled.input`margin-right: 10px;`;
 const AddButton = styled.button`
-  padding: 10px 20px; font-size: 16px; color: white; background-color: #007bff;
-  border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;
-  &:hover { background-color: #0056b3; }
+  padding: 10px 20px; font-size: 16px; color: white; background-color: var(--accent);
+  border: none; border-radius: var(--radius-sm); cursor: pointer; margin-top: 10px;
+  &:hover { background-color: var(--accent-hover); }
 `;
 const RemoveButton = styled.button`
-  padding: 5px 10px; font-size: 14px; color: white; background-color: #dc3545;
-  border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;
-  &:hover { background-color: #c82333; }
+  padding: 5px 10px; font-size: 14px; color: white; background-color: var(--bad);
+  border: none; border-radius: var(--radius-sm); cursor: pointer; margin-top: 10px;
+  &:hover { filter: brightness(0.88); }
 `;
 const Row = styled.div`display: grid; grid-template-columns: 1fr 180px; gap: 12px; align-items: center;`;
-const Small = styled.div`font-size: 12px; color: #777; margin-top: 6px;`;
+const Small = styled.div`font-size: 12px; color: var(--text-muted); margin-top: 6px;`;
 
 // Optional UUID helper if you want payload IDs here too
 function uuidv4() {

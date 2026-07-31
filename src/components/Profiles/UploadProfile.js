@@ -6,10 +6,11 @@ import styled from 'styled-components';
 const UploadContainer = styled.div`
   display: flex;
   align-items: center;
-  background-color: #f9f9f9;
+  gap: 8px;
+  background-color: var(--surface-muted);
   padding: 10px 20px;
   border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
 `;
 
 const FileInput = styled.input`
@@ -20,13 +21,12 @@ const UploadLabel = styled.label`
   padding: 8px 16px;
   font-size: 14px;
   color: white;
-  background-color: #007bff;
-  border-radius: 4px;
+  background-color: var(--accent);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  margin-right: 10px;
 
   &:hover {
-    background-color: #0056b3;
+    background-color: var(--accent-hover);
   }
 `;
 
@@ -34,30 +34,35 @@ const UploadButton = styled.button`
   padding: 8px 16px;
   font-size: 14px;
   color: white;
-  background-color: #28a745;
+  background-color: var(--text);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 
   &:hover {
-    background-color: #218838;
+    background-color: #242424;
   }
 
   &:disabled {
-    background-color: #6c757d;
+    background-color: var(--text-soft);
     cursor: not-allowed;
   }
 `;
 
-const UploadProfile = () => {
+const UploadProfile = ({ onUploadSuccess }) => {
   const [selectedFile, setSelectedFile] = useState(null);
 
   const mutation = useMutation(async (formData) => {
-    await axiosInstance.post('/v1/profile/upload', formData, {
+    return axiosInstance.post('/v1/profile/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+  }, {
+    onSuccess: () => {
+      setSelectedFile(null);
+      onUploadSuccess?.();
+    },
   });
 
   const handleFileChange = (e) => {
@@ -87,8 +92,8 @@ const UploadProfile = () => {
      <UploadButton onClick={handleCreateProfile}>
         Create Profile
       </UploadButton>
-      <FileInput type="file" id="file-upload" onChange={handleFileChange} />
-      <UploadLabel htmlFor="file-upload">Choose File</UploadLabel>
+      <FileInput type="file" id="file-upload" accept=".mobileconfig,application/x-apple-aspen-config" onChange={handleFileChange} />
+      <UploadLabel htmlFor="file-upload">{selectedFile ? selectedFile.name : "Choose File"}</UploadLabel>
       <UploadButton onClick={handleUpload} disabled={!selectedFile}>
         Upload
       </UploadButton>

@@ -408,6 +408,24 @@ const Select = styled.select`
   padding: 0 10px;
 `;
 
+const Input = styled.input`
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface-muted);
+  padding: 0 10px;
+`;
+
+const CommandForm = styled.div`
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+`;
+
 const CommandGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -426,6 +444,17 @@ const AppRow = styled.div`
   border-radius: 8px;
   background: var(--surface-muted);
   padding: 10px;
+`;
+
+const ErrorBox = styled.div`
+  margin-bottom: 10px;
+  padding: 10px 11px;
+  color: var(--bad);
+  white-space: pre-wrap;
+  background: var(--bad-soft);
+  border: 1px solid var(--bad);
+  border-radius: 8px;
+  font-size: 13px;
 `;
 
 const RowHeader = styled.div`
@@ -454,8 +483,30 @@ const commandButtons = [
   { label: "Refresh info", command: "DeviceInformation", icon: IoRefresh },
   { label: "Installed apps", command: "InstalledApplicationList", icon: IoPhonePortraitOutline },
   { label: "Locate device", command: "DeviceLocation", icon: IoLocateOutline },
-  { label: "Lock device", command: "DeviceLock", icon: IoLockClosedOutline },
 ];
+
+const commandCatalog = [
+  { command: "RequestMirroring", label: "AirPlay to Apple TV", target: "appletv" },
+  { command: "StopMirroring", label: "Stop AirPlay" },
+  { command: "DeviceLock", label: "Lock device", fields: ["pin", "message", "phone_number"] },
+  { command: "RestartDevice", label: "Restart device" },
+  { command: "ShutDownDevice", label: "Shut down device" },
+  { command: "EnableLostMode", label: "Enable Lost Mode", fields: ["message", "phone_number", "footnote"] },
+  { command: "PlayLostModeSound", label: "Play Lost Mode sound" },
+  { command: "DisableLostMode", label: "Disable Lost Mode" },
+  { command: "ClearPasscode", label: "Clear passcode" },
+  { command: "SecurityInfo", label: "Refresh security info" },
+  { command: "ProvisioningProfileList", label: "List provisioning profiles" },
+  { command: "ManagedApplicationList", label: "Refresh managed apps" },
+  { command: "SEND_MESSAGE", label: "Send message", fields: ["message"] },
+];
+
+const fieldLabels = {
+  pin: "Six-digit PIN",
+  message: "Message",
+  phone_number: "Phone number",
+  footnote: "Footnote",
+};
 
 function formatCheckin(value) {
   if (!value) return "-";
@@ -468,6 +519,15 @@ function getDeviceStats(devices) {
   const enrolled = devices.filter((device) => !!device.enrollment_status).length;
   const supervised = devices.filter((device) => !!device.IsSupervised).length;
   return { total, enrolled, supervised };
+}
+
+function deviceOSName(device) {
+  const model = `${device?.ModelName || ""} ${device?.Model || ""} ${device?.ProductName || ""}`.toLowerCase();
+  if (model.includes("apple tv") || model.includes("appletv")) return "tvOS";
+  if (model.includes("vision") || model.includes("realitydevice")) return "visionOS";
+  if (model.includes("watch")) return "watchOS";
+  if (model.includes("mac")) return "macOS";
+  return "iOS";
 }
 
 function matchesSearch(device, query) {
@@ -496,7 +556,7 @@ function DeviceListRow({ device, selected, onSelect }) {
         </DeviceIcon>
         <div style={{ minWidth: 0 }}>
           <DeviceName>{device.DeviceName || "Unnamed device"}</DeviceName>
-          <DeviceMeta>{device.ModelName || "Unknown model"} · iOS {device.OSVersion || "-"}</DeviceMeta>
+          <DeviceMeta>{device.ModelName || "Unknown model"} · {deviceOSName(device)} {device.OSVersion || "-"}</DeviceMeta>
         </div>
         <IoChevronForward color="var(--text-soft)" />
       </DeviceRowMain>
@@ -565,6 +625,10 @@ function DevicesPageV2() {
   const [filter, setFilter] = useState("all");
   const [tab, setTab] = useState("general");
   const [appSearch, setAppSearch] = useState("");
+  const [advancedCommand, setAdvancedCommand] = useState("RequestMirroring");
+  const [commandFields, setCommandFields] = useState({});
+  const [commandTarget, setCommandTarget] = useState("");
+  const [commandError, setCommandError] = useState("");
 
   const { data: devices = [], isLoading: devicesLoading, error: devicesError } = useQuery("devices", fetchDevices);
   const { data: users = [] } = useQuery("users", fetchUsers);
@@ -580,10 +644,22 @@ function DevicesPageV2() {
   );
 
   const sendCommand = useMutation(
-    (command) => axiosInstance.post(`v1/sendcommand/${udid}`, { command }),
+    async (command) => {
+      setCommandError("");
+      const { data } = await axiosInstance.post(`v1/sendcommand/${udid}`, {
+        command: typeof command === "string" ? { command } : command,
+      });
+      if (data?.error || data?.status === "failed") {
+        throw new Error(data.error || "The command could not be queued.");
+      }
+      return data;
+    },
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["deviceDetails", udid]);
+      },
+      onError: (error) => {
+        setCommandError(error?.response?.data?.error || error.message || "The command could not be queued.");
       },
     }
   );
@@ -598,6 +674,23 @@ function DevicesPageV2() {
   );
 
   const stats = useMemo(() => getDeviceStats(devices), [devices]);
+  const selectedCommandDefinition = commandCatalog.find((item) => item.command === advancedCommand);
+  const airPlayTargets = useMemo(
+    () => devices.filter((device) => {
+      const model = `${device.ModelName || ""} ${device.Model || ""}`.toLowerCase();
+      return device.udid !== udid && (model.includes("apple tv") || model.includes("appletv"));
+    }),
+    [devices, udid]
+  );
+
+  const sendAdvancedCommand = () => {
+    if (selectedCommandDefinition?.target === "appletv" && !commandTarget) return;
+    sendCommand.mutate({
+      command: advancedCommand,
+      targetDevice: selectedCommandDefinition?.target ? commandTarget : undefined,
+      fields: commandFields,
+    });
+  };
 
   const filteredDevices = useMemo(() => {
     return devices.filter((device) => {
@@ -845,6 +938,7 @@ function DevicesPageV2() {
                     </div>
                   </CardHeader>
                   <CardBody>
+                    {commandError ? <ErrorBox role="alert">{commandError}</ErrorBox> : null}
                     <CommandGrid>
                       {commandButtons.map((item) => {
                         const Icon = item.icon;
@@ -863,11 +957,69 @@ function DevicesPageV2() {
                     <Button
                       style={{ width: "100%", marginTop: 8 }}
                       $primary
-                      onClick={() => sendCommand.mutate({ command: "SEND_MESSAGE", fields: { message: "Please check in with IT." } })}
+                      onClick={() => setAdvancedCommand("SEND_MESSAGE")}
                     >
                       <IoSend />
-                      Send IT message
+                      Compose command
                     </Button>
+                    <CommandForm>
+                      <Select
+                        value={advancedCommand}
+                        onChange={(event) => {
+                          setAdvancedCommand(event.target.value);
+                          setCommandFields({});
+                          setCommandTarget("");
+                        }}
+                      >
+                        {commandCatalog.map((item) => (
+                          <option key={item.command} value={item.command}>{item.label}</option>
+                        ))}
+                      </Select>
+
+                      {selectedCommandDefinition?.target === "appletv" ? (
+                        <Select value={commandTarget} onChange={(event) => setCommandTarget(event.target.value)}>
+                          <option value="">Select an Apple TV</option>
+                          {airPlayTargets.map((device) => (
+                            <option key={device.udid} value={device.udid}>
+                              {device.DeviceName || device.udid}
+                            </option>
+                          ))}
+                        </Select>
+                      ) : null}
+
+                      {(selectedCommandDefinition?.fields || []).map((field) => (
+                        <Input
+                          key={field}
+                          type={field === "pin" ? "text" : "text"}
+                          inputMode={field === "pin" ? "numeric" : undefined}
+                          maxLength={field === "pin" ? 6 : undefined}
+                          placeholder={fieldLabels[field] || field}
+                          value={commandFields[field] || ""}
+                          onChange={(event) => {
+                            const value = field === "pin"
+                              ? event.target.value.replace(/\D/g, "").slice(0, 6)
+                              : event.target.value;
+                            setCommandFields((current) => ({ ...current, [field]: value }));
+                          }}
+                        />
+                      ))}
+
+                      <Button
+                        $primary
+                        disabled={
+                          sendCommand.isLoading ||
+                          (selectedCommandDefinition?.target === "appletv" && !commandTarget) ||
+                          (advancedCommand === "DeviceLock" && commandFields.pin && commandFields.pin.length !== 6)
+                        }
+                        onClick={sendAdvancedCommand}
+                      >
+                        <IoSend />
+                        {sendCommand.isLoading ? "Queuing…" : `Queue ${selectedCommandDefinition?.label || "command"}`}
+                      </Button>
+                      {selectedCommandDefinition?.target === "appletv" && airPlayTargets.length === 0 ? (
+                        <Sub>No Apple TV devices are enrolled and available as AirPlay targets.</Sub>
+                      ) : null}
+                    </CommandForm>
                   </CardBody>
                 </Card>
 

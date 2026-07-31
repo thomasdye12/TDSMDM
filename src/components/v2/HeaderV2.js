@@ -5,7 +5,6 @@ import { QRCodeCanvas } from "qrcode.react";
 import {
   IoAdd,
   IoAppsOutline,
-  IoChevronBack,
   IoClipboardOutline,
   IoCloudDoneOutline,
   IoHardwareChipOutline,
@@ -13,12 +12,11 @@ import {
   IoPhonePortraitOutline,
 } from "react-icons/io5";
 import { userAccessToserviceSub } from "../../utils/axios";
-import { disableV2Ui } from "../../utils/featureFlags";
 
 const Shell = styled.header`
   flex: 0 0 auto;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-bottom: 1px solid #1e1e1e;
+  background: #0b0b0b;
   backdrop-filter: blur(14px);
   position: sticky;
   top: 0;
@@ -46,13 +44,13 @@ const Brand = styled.div`
 const Title = styled.div`
   font-size: 15px;
   font-weight: 850;
-  color: var(--text);
+  color: white;
 `;
 
 const Sub = styled.div`
   margin-top: 2px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: #a8a8a8;
 `;
 
 const Nav = styled.nav`
@@ -72,21 +70,21 @@ const NavPill = styled(Link)`
   padding: 0 11px;
   border: 1px solid transparent;
   border-radius: 8px;
-  color: var(--text-muted);
+  color: #bdbdbd;
   text-decoration: none;
   font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
 
   &:hover {
-    color: var(--text);
-    background: var(--surface-soft);
+    color: white;
+    background: #1c1c1c;
   }
 
   &[data-active="true"] {
-    color: var(--accent);
-    border-color: var(--border);
-    background: var(--accent-soft);
+    color: white;
+    border-color: #343434;
+    background: #202020;
   }
 `;
 
@@ -253,18 +251,13 @@ function HeaderV2() {
     }
   };
 
-  const leaveV2 = () => {
-    disableV2Ui();
-    window.location.href = `${window.location.pathname}?ui=classic`;
-  };
-
   return (
     <>
       <Shell>
         <Bar>
           <Brand>
-            <Title>Profile Manager</Title>
-            <Sub>V2 operations workspace</Sub>
+            <Title>TDS MDM</Title>
+            <Sub>Device operations</Sub>
           </Brand>
 
           <Nav aria-label="Main navigation">
@@ -284,10 +277,6 @@ function HeaderV2() {
           </Nav>
 
           <Actions>
-            <Button title="Return to classic UI" onClick={leaveV2}>
-              <IoChevronBack />
-              Classic
-            </Button>
             <Button title="Copy enrollment link" onClick={copyEnrollmentLink}>
               <IoClipboardOutline />
               Copy

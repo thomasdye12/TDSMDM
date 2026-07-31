@@ -5,6 +5,7 @@ import styled from "styled-components";
 import Upload from "./UploadApp";
 import AppSingleCell from "./AppSingleCell";
 import AppInstallSettingsEditor from "./AppInstallSettingsEditor";
+import ProvisioningProfileManager from "./ProvisioningProfileManager";
 
 const fetchApps = async () => {
   const { data } = await axiosInstance.get("/v1/apps/get");
@@ -790,22 +791,11 @@ function AppList() {
             )}
 
             {detailsTab === "provision" && (
-              <Pre>
-                {JSON.stringify(
-                  {
-                    TeamName: selectedApp?.mobileprovision?.TeamName,
-                    AppIDName: selectedApp?.mobileprovision?.AppIDName,
-                    UUID: selectedApp?.mobileprovision?.UUID,
-                    CreationDate: selectedApp?.mobileprovision?.CreationDate,
-                    ExpirationDate: selectedApp?.mobileprovision?.ExpirationDate,
-                    TimeToLive: selectedApp?.mobileprovision?.TimeToLive,
-                    ProvisionedDevicesCount:
-                      selectedApp?.mobileprovision?.ProvisionedDevices?.length || 0,
-                  },
-                  null,
-                  2
-                )}
-              </Pre>
+              <ProvisioningProfileManager
+                app={selectedApp}
+                devices={devices || []}
+                onUpdated={refetchApps}
+              />
             )}
 
             {detailsTab === "entitlements" && (

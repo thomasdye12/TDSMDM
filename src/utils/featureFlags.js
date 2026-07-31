@@ -19,10 +19,10 @@ export function isV2UiEnabled() {
     return true;
   }
 
-  return window.localStorage.getItem(V2_STORAGE_KEY) === "1";
+  return window.localStorage.getItem(V2_STORAGE_KEY) !== "0";
 }
 
 export function disableV2Ui() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(V2_STORAGE_KEY);
+  window.localStorage.setItem(V2_STORAGE_KEY, "0");
 }

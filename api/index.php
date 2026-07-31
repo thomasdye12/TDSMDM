@@ -73,6 +73,7 @@ $kernel->setExcludedEndpoints([
     "core/v1/ddm/declaration-items",
     "core/v1/ddm/status",
     "core/v1/ddm/declaration/{String}/{String}",
+    "core/v1/ddm/profile/{String}/{String}",
     "core/v1/tokens",
     "core/v1/declaration-items",
     "core/v1/status",
@@ -100,6 +101,7 @@ $kernel->addEndpoints([
     "core/v1/ddm/declaration-items" => ["func" => "DDM_Service_declarationItems", "auth" => false],
     "core/v1/ddm/status" => ["func" => "DDM_Service_status", "auth" => false],
     "core/v1/ddm/declaration/{String}/{String}" => ["func" => "DDM_Service_declaration", "auth" => false],
+    "core/v1/ddm/profile/{String}/{String}" => ["func" => "DDM_Service_profile", "auth" => false],
 
     "core/v1/tokens" => ["func" => "DDM_Service_tokens", "auth" => false],
     "core/v1/declaration-items" => ["func" => "DDM_Service_declarationItems", "auth" => false],
@@ -137,6 +139,10 @@ $kernel->addEndpoints([
     "v1/apps/device/remove{POST}" => ["func" => "Apps_removeFromDevices", "auth" => true],
     "v1/apps/install-setting-functions{GET}" => ["func" => "Apps_installSettingFunctions", "auth" => true],
     "v1/apps/{String}/install-settings{POST}" => ["func" => "Apps_saveInstallSettings", "auth" => true],
+    "v1/apps/{String}/lifecycle{POST}" => ["func" => "Apps_setLifecycleState", "auth" => true],
+    "v1/apps/{String}/provisioning-profile{GET}" => ["func" => "AppProvisioning_get", "auth" => true],
+    "v1/apps/{String}/provisioning-profile{POST}" => ["func" => "AppProvisioning_upload", "auth" => true],
+    "v1/apps/{String}/provisioning-profile/deploy{POST}" => ["func" => "AppProvisioning_deploy", "auth" => true],
     "v1/apps/{String}/newinfo" => ["func" => "Apps_GetNewInfofromIPA", "auth" => true],
 
     "v1/profiles/get" => ["func" => "Profiles_get", "auth" => true],

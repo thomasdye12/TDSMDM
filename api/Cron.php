@@ -19,8 +19,8 @@ foreach ($AllDevices as $device) {
     if (!$device["enrollment_status"] == true) {
         continue;
     }
-    // check if the device has checked in within the last 20 minutes
-    if ($device["lastCheckin"] < time() - (60 * 60 * 2)) {
+    // check if the device has checked in within the last 3 days, if not send a checkin command
+    if ($device["lastCheckin"] < time() - (60 * 60 * 24 * 3)) {
         $postdata = ["command" => ["command" => "DeviceInformation"]];
         // check the event queue for a pending command that is a check in for that device
         $cursor = $MDMEventQueue->find(["complete" => ['$ne' => true],"udid" => $device["udid"], "command.command" => "DeviceInformation"]);

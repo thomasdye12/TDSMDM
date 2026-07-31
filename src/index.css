@@ -16,54 +16,56 @@ code {
 
 :root {
   color-scheme: light;
-  --app-bg: #f5f7fb;
+  --app-bg: #f4f4f2;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-soft: #eef2f7;
-  --surface-muted: #f8fafc;
-  --border: rgba(15, 23, 42, 0.1);
-  --border-strong: rgba(15, 23, 42, 0.18);
-  --text: #111827;
-  --text-muted: #64748b;
-  --text-soft: #94a3b8;
-  --accent: #2563eb;
-  --accent-strong: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.12);
-  --ok: #14803c;
-  --ok-soft: rgba(20, 128, 60, 0.12);
-  --warn: #a16207;
-  --warn-soft: rgba(161, 98, 7, 0.14);
-  --bad: #c2410c;
-  --bad-soft: rgba(194, 65, 12, 0.12);
-  --shadow-soft: 0 16px 44px rgba(15, 23, 42, 0.08);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --app-bg: #0b0f14;
-    --surface: #111821;
-    --surface-raised: #151f2a;
-    --surface-soft: #182433;
-    --surface-muted: #0f1720;
-    --border: rgba(226, 232, 240, 0.1);
-    --border-strong: rgba(226, 232, 240, 0.18);
-    --text: #eef2f7;
-    --text-muted: #a3b2c7;
-    --text-soft: #718096;
-    --accent: #60a5fa;
-    --accent-strong: #93c5fd;
-    --accent-soft: rgba(96, 165, 250, 0.16);
-    --ok: #4ade80;
-    --ok-soft: rgba(74, 222, 128, 0.14);
-    --warn: #facc15;
-    --warn-soft: rgba(250, 204, 21, 0.14);
-    --bad: #fb923c;
-    --bad-soft: rgba(251, 146, 60, 0.14);
-    --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.32);
-  }
+  --surface-soft: #eeeeeb;
+  --surface-muted: #fafaf8;
+  --surface-hover: #f0f0ed;
+  --border: rgba(0, 0, 0, 0.11);
+  --border-strong: rgba(0, 0, 0, 0.24);
+  --text: #0a0a0a;
+  --text-muted: #616161;
+  --text-soft: #969696;
+  --accent: #0868d7;
+  --accent-strong: #0053b8;
+  --accent-hover: #0053b8;
+  --accent-soft: rgba(8, 104, 215, 0.1);
+  --ok: #176a36;
+  --ok-soft: rgba(23, 106, 54, 0.1);
+  --warn: #805500;
+  --warn-soft: rgba(128, 85, 0, 0.11);
+  --bad: #a72b2b;
+  --bad-soft: rgba(167, 43, 43, 0.1);
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.055);
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.055);
+  --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.28);
+  --radius-sm: 8px;
+  --radius-lg: 12px;
+  --focus-ring: 0 0 0 3px var(--accent-soft);
 }
 
 * {
   box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+::selection {
+  color: white;
+  background: var(--accent);
 }

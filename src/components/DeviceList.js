@@ -198,7 +198,7 @@ function DeviceCard({ device }) {
           <div style={{ minWidth: 0 }}>
             <Name>{device.DeviceName || "Unnamed device"}</Name>
             <Meta>
-              {device.ModelName || "—"} • iOS {device.OSVersion || "—"}
+              {device.ModelName || "—"} • {`${device.ModelName || ""} ${device.Model || ""}`.toLowerCase().includes("appletv") || `${device.ModelName || ""}`.toLowerCase().includes("apple tv") ? "tvOS" : `${device.ModelName || ""} ${device.Model || ""}`.toLowerCase().includes("mac") ? "macOS" : "iOS"} {device.OSVersion || "—"}
             </Meta>
           </div>
         </Left>

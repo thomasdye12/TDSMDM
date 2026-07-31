@@ -2,10 +2,11 @@ import React from 'react';
 import styled from 'styled-components';
 
 const ListContainer = styled.div`
-  // width: 20%;
-  background-color: #f0f0f0;
-  padding: 20px;
-  border-right: 1px solid #ccc;
+  width: 250px;
+  flex: 0 0 250px;
+  background: var(--surface);
+  padding: 14px;
+  border-right: 1px solid var(--border);
   overflow-y: auto;
 `;
 
@@ -13,16 +14,16 @@ const SectionButton = styled.button`
   display: block;
   width: 100%;
   padding: 10px;
-  margin-bottom: 10px;
-  background-color: ${({ isActive }) => (isActive ? '#007bff' : '#ffffff')};
-  color: ${({ isActive }) => (isActive ? '#ffffff' : '#000000')};
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  margin-bottom: 6px;
+  background: ${({ isActive }) => (isActive ? 'var(--accent-soft)' : 'transparent')};
+  color: ${({ isActive }) => (isActive ? 'var(--accent)' : 'var(--text)')};
+  border: 1px solid ${({ isActive }) => (isActive ? 'var(--accent)' : 'transparent')};
+  border-radius: 8px;
   text-align: left;
   cursor: pointer;
 
   &:hover {
-    background-color: ${({ isActive }) => (isActive ? '#0056b3' : '#f0f0f0')};
+    background: ${({ isActive }) => (isActive ? 'var(--accent-soft)' : 'var(--surface-soft)')};
   }
 `;
 
@@ -78,6 +79,12 @@ const SectionList = ({ activeSection, setActiveSection }) => {
         onClick={() => setActiveSection('SingleAppModeSettings')}
       >
         Single App Mode
+      </SectionButton>
+      <SectionButton
+        isActive={activeSection === 'AdvancedPayloads'}
+        onClick={() => setActiveSection('AdvancedPayloads')}
+      >
+        Apple Payloads
       </SectionButton>
         
       {/* Add more sections as needed */}

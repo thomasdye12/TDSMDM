@@ -56,6 +56,7 @@ function EventQueue_UpdateEventraw($data,$event) {
         $updateevent["status"] = "error";
         $updateevent["update_at"] = time();
         $updateevent["statekey"] = 3;
+        $updateevent["complete"] = true;
         $updateevent["message"] = $data["ErrorChain"][0]["LocalizedDescription"] ?? "";
     }
 
@@ -67,5 +68,18 @@ function EventQueue_UpdateEventraw($data,$event) {
         ['$set' => $updateevent]
     );
 
+    $eventStatus = $event["status"] ?? "";
+    if (
+        $command_uuid !== ""
+        && in_array($eventStatus, ["Acknowledged", "Error"], true)
+        && function_exists("AppProvisioning_updateDeploymentStatus")
+    ) {
+        $deploymentStatus = $eventStatus === "Acknowledged" ? "Acknowledged" : "Error";
+        AppProvisioning_updateDeploymentStatus(
+            $command_uuid,
+            $deploymentStatus,
+            $updateevent["message"] ?? null
+        );
+    }
  
 }

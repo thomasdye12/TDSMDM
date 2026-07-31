@@ -14,10 +14,21 @@ import LoginWindowSettings from './LoginWindowSettings'; // import the new compo
 import SharedDeviceSettings from './SharedDeviceSettings'; // import the new component
 import RestrictionsSettings from './restrictionsSettings'; // import the new component
 import SingleAppModeSettings from './singleAppMode'; // import the new component
+import AdvancedPayloadSettings from './AdvancedPayloadSettings';
 
 const Container = styled.div`
   display: flex;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
+  background: var(--app-bg);
+  color: var(--text);
+`;
+
+const Content = styled.div`
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 20px;
 `;
 
 const fetchProfile = async (profileId) => {
@@ -47,6 +58,7 @@ const ProfileEdit = () => {
   return (
     <Container>
       <SectionList activeSection={activeSection} setActiveSection={setActiveSection} />
+      <Content>
       <SettingsPanel>
         {activeSection === 'General' && (
           <GeneralSettings settings={settings} setSettings={setSettings} />
@@ -73,8 +85,12 @@ const ProfileEdit = () => {
         {activeSection === 'SingleAppModeSettings' && (
           <SingleAppModeSettings settings={settings} setSettings={setSettings} />
         )}
+        {activeSection === 'AdvancedPayloads' && (
+          <AdvancedPayloadSettings settings={settings} setSettings={setSettings} />
+        )}
         {/* Add other sections similarly */}
       </SettingsPanel>
+      </Content>
       <SaveButton settings={settings} />
     </Container>
   );

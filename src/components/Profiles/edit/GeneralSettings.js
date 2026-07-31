@@ -1,92 +1,114 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 const Container = styled.div`
- 
+  max-width: 900px;
 `;
 
 const Title = styled.h2`
-  margin-bottom: 20px;
+  margin: 0 0 20px;
+  color: var(--text);
   font-size: 24px;
-  color: #333;
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 `;
 
 const Label = styled.label`
   display: block;
-  margin-bottom: 8px;
-  font-size: 16px;
-  color: #555;
+  margin-bottom: 7px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
 `;
 
-const Input = styled.input`
+const controlStyles = `
   width: 100%;
   padding: 10px;
-  font-size: 16px;
-  color: #333;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   outline: none;
-  transition: border-color 0.3s;
 
   &:focus {
-    border-color: #007bff;
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
   }
 `;
 
-const GeneralSettings = ({ settings, setSettings }) => {
+const Input = styled.input`${controlStyles}`;
+const Select = styled.select`${controlStyles}`;
+const Textarea = styled.textarea`
+  ${controlStyles}
+  min-height: 100px;
+  resize: vertical;
+`;
+
+const CheckboxRow = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+`;
+
+function GeneralSettings({ settings, setSettings }) {
+  const setField = (key, value) => setSettings({ ...settings, [key]: value });
+
   return (
     <Container>
       <Title>General Settings</Title>
       <FormGroup>
-        <Label>Display Name:</Label>
+        <Label>Display name</Label>
+        <Input value={settings?.PayloadDisplayName || ""} onChange={(event) => setField("PayloadDisplayName", event.target.value)} />
+      </FormGroup>
+      <FormGroup>
+        <Label>Description</Label>
+        <Input value={settings?.PayloadDescription || ""} onChange={(event) => setField("PayloadDescription", event.target.value)} />
+      </FormGroup>
+      <FormGroup>
+        <Label>Organization</Label>
+        <Input value={settings?.PayloadOrganization || ""} onChange={(event) => setField("PayloadOrganization", event.target.value)} />
+      </FormGroup>
+      <FormGroup>
+        <Label>Payload scope</Label>
+        <Select value={settings?.PayloadScope || "System"} onChange={(event) => setField("PayloadScope", event.target.value)}>
+          <option value="System">System / device</option>
+          <option value="User">User</option>
+        </Select>
+      </FormGroup>
+      <FormGroup>
+        <CheckboxRow>
+          <input
+            type="checkbox"
+            checked={Boolean(settings?.PayloadRemovalDisallowed)}
+            onChange={(event) => setField("PayloadRemovalDisallowed", event.target.checked)}
+          />
+          Prevent the user from removing this profile
+        </CheckboxRow>
+      </FormGroup>
+      <FormGroup>
+        <Label>Automatic removal after (seconds, optional)</Label>
         <Input
-          type="text"
-          value={settings?.PayloadDisplayName}
-          onChange={(e) =>
-            setSettings({ ...settings, PayloadDisplayName: e.target.value })
-          }
+          type="number"
+          min="1"
+          value={settings?.DurationUntilRemoval || ""}
+          onChange={(event) => setField("DurationUntilRemoval", event.target.value)}
         />
       </FormGroup>
-        {/* PayloadDescription */}
-        <FormGroup>
-        <Label>Description:</Label>
-        <Input
-          type="text"
-          value={settings?.PayloadDescription}
-          onChange={(e) =>
-            setSettings({ ...settings, PayloadDescription: e.target.value })
-          }
+      <FormGroup>
+        <Label>Consent text (English, optional)</Label>
+        <Textarea
+          value={settings?.ConsentText?.default || ""}
+          onChange={(event) => setField(
+            "ConsentText",
+            event.target.value ? { ...(settings.ConsentText || {}), default: event.target.value } : {}
+          )}
         />
-        </FormGroup>
-        {/* PayloadOrganization */}
-        <FormGroup>
-        <Label>Organization:</Label>
-        <Input
-          type="text"
-          value={settings?.PayloadOrganization}
-          onChange={(e) =>
-            setSettings({ ...settings, PayloadOrganization: e.target.value })
-          }
-        />
-        </FormGroup>
-        {/* PayloadRemovalDisallowed bool */}
-        {/* <FormGroup>
-        <Label>Removal Disallowed:</Label>
-        <Input
-          type="checkbox"
-          value={!settings?.PayloadRemovalDisallowed}
-          onChange={(e) =>
-            setSettings({ ...settings, PayloadRemovalDisallowed: e.target.value })
-          }
-        />
-        </FormGroup> */}
-        {/* PayloadScope */}
+      </FormGroup>
     </Container>
   );
-};
+}
 
 export default GeneralSettings;
