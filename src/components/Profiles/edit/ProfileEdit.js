@@ -13,6 +13,7 @@ import DomainSettings from './DomainSettings'; // import the new component
 import LoginWindowSettings from './LoginWindowSettings'; // import the new component
 import SharedDeviceSettings from './SharedDeviceSettings'; // import the new component
 import RestrictionsSettings from './restrictionsSettings'; // import the new component
+import HomeScreenLayoutSettings from './HomeScreenLayoutSettings';
 import SingleAppModeSettings from './singleAppMode'; // import the new component
 import AdvancedPayloadSettings from './AdvancedPayloadSettings';
 
@@ -22,6 +23,8 @@ const Container = styled.div`
   min-height: 0;
   background: var(--app-bg);
   color: var(--text);
+
+  @media (max-width: 800px) { flex-direction: column; }
 `;
 
 const Content = styled.div`
@@ -29,6 +32,8 @@ const Content = styled.div`
   min-width: 0;
   overflow: auto;
   padding: 20px;
+
+  @media (max-width: 800px) { padding: 10px 10px 76px; }
 `;
 
 const fetchProfile = async (profileId) => {
@@ -80,6 +85,9 @@ const ProfileEdit = () => {
           )}
     {activeSection === 'RestrictionsSettings' && (
           <RestrictionsSettings settings={settings} setSettings={setSettings} />
+        )}
+        {activeSection === 'HomeScreenLayoutSettings' && (
+          <HomeScreenLayoutSettings settings={settings} setSettings={setSettings} />
         )}
         {/* singleAppMode */}
         {activeSection === 'SingleAppModeSettings' && (

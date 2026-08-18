@@ -10,6 +10,8 @@ const Page = styled.div`
   background: var(--app-bg);
   color: var(--text);
   padding: 18px;
+
+  @media (max-width: 600px) { padding: 10px; }
 `;
 
 const Shell = styled.div`
@@ -26,6 +28,8 @@ const Card = styled.section`
   background: var(--surface);
   box-shadow: var(--shadow-sm);
   padding: 16px;
+
+  @media (max-width: 600px) { padding: 12px; }
 `;
 
 const Header = styled(Card)`
@@ -67,6 +71,8 @@ const Actions = styled.div`
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+
+  @media (max-width: 600px) { width: 100%; > * { flex: 1 1 auto; justify-content: center; } }
 `;
 
 const Button = styled.button`
@@ -101,6 +107,7 @@ const Stats = styled.div`
   gap: 10px;
 
   @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 430px) { gap: 7px; }
 `;
 
 const Stat = styled(Card)`padding: 13px;`;
@@ -137,6 +144,7 @@ const CodeRow = styled.div`
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   margin-top: 12px;
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
 `;
 const Code = styled.code`
   min-width: 0;
@@ -164,6 +172,7 @@ const Input = styled.input`
 
 const Segments = styled.div`
   display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  @media (max-width: 600px) { overflow-x: auto; > * { flex: 1 0 auto; } }
 `;
 const Segment = styled.button`
   min-height: 36px; border: 0; border-right: 1px solid var(--border); padding: 0 10px;
@@ -183,6 +192,7 @@ const DeviceRow = styled.div`
   border: 1px solid var(--border);
   border-radius: 9px;
   background: var(--surface-muted);
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
 `;
 const DeviceName = styled.div`font-size: 14px; font-weight: 900;`;
 const DeviceMeta = styled.div`margin-top: 3px; color: var(--text-muted); font-size: 11px;`;

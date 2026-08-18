@@ -10,6 +10,14 @@ const Tr = styled.tr`
   &:hover {
     background: var(--accent-soft);
   }
+
+  @media (max-width: 700px) {
+    display: block;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+  }
 `;
 
 const Td = styled.td`
@@ -17,6 +25,14 @@ const Td = styled.td`
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
   font-size: 14px;
+
+  @media (max-width: 700px) {
+    display: block;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left !important;
+    &:last-child { border-bottom: 0; }
+  }
 `;
 
 const NameBlock = styled.div`
@@ -61,6 +77,11 @@ const BtnRow = styled.div`
   gap: 8px;
   justify-content: flex-end;
   flex-wrap: wrap;
+
+  @media (max-width: 700px) {
+    justify-content: stretch;
+    > * { flex: 1 1 42%; min-height: 44px; justify-content: center; }
+  }
 `;
 
 const Button = styled.button`

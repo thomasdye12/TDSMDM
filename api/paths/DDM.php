@@ -811,7 +811,7 @@ function DDM_statusSnapshot($state)
 function DDM_flattenStatusItems($value, $prefix, &$output)
 {
     $value = DDM_toArray($value);
-    if (!is_array($value) || array_is_list($value) || count($value) === 0) {
+    if (!is_array($value) || DDM_isList($value) || count($value) === 0) {
         if ($prefix !== "") {
             $output[] = [
                 "key" => $prefix,
@@ -827,6 +827,17 @@ function DDM_flattenStatusItems($value, $prefix, &$output)
         $nextPrefix = $prefix === "" ? (string)$key : $prefix . "." . (string)$key;
         DDM_flattenStatusItems($item, $nextPrefix, $output);
     }
+}
+
+function DDM_isList($value)
+{
+    if (!is_array($value)) {
+        return false;
+    }
+    if (count($value) === 0) {
+        return true;
+    }
+    return array_keys($value) === range(0, count($value) - 1);
 }
 
 function DDM_statusLabel($key)

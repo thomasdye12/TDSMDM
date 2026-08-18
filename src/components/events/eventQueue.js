@@ -14,6 +14,8 @@ const Page = styled.main`
   min-height: 100vh;
   padding: 22px;
   background: var(--surface-muted);
+
+  @media (max-width: 700px) { min-height: 100%; padding: 10px; }
 `;
 
 const Shell = styled.section`
@@ -35,6 +37,7 @@ const Header = styled.header`
   @media (max-width: 720px) {
     align-items: stretch;
     flex-direction: column;
+    padding: 14px;
   }
 `;
 
@@ -75,12 +78,21 @@ const Search = styled.input`
 
 const TableWrap = styled.div`
   overflow: auto;
+
+  @media (max-width: 700px) { overflow: visible; padding: 10px; }
 `;
 
 const Table = styled.table`
   width: 100%;
   min-width: 850px;
   border-collapse: collapse;
+
+  @media (max-width: 700px) {
+    display: block;
+    min-width: 0;
+    thead { display: none; }
+    tbody { display: grid; gap: 10px; }
+  }
 `;
 
 const Th = styled.th`
@@ -98,12 +110,31 @@ const Td = styled.td`
   padding: 13px 14px;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
+
+  @media (max-width: 700px) {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px;
+    padding: 7px 12px;
+    border: 0;
+    overflow-wrap: anywhere;
+    &::before { content: attr(data-label); color: var(--text-muted); font-size: 11px; font-weight: 800; }
+    &:first-child { display: none; }
+  }
 `;
 
 const Row = styled.tr`
   cursor: pointer;
   &:hover { background: var(--surface-hover); }
   &:last-child ${Td} { border-bottom: 0; }
+
+  @media (max-width: 700px) {
+    display: block;
+    padding: 6px 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+  }
 `;
 
 const Mono = styled.code`
@@ -137,6 +168,8 @@ const Overlay = styled.div`
   justify-content: center;
   padding: 20px;
   background: rgba(0, 0, 0, 0.62);
+
+  @media (max-width: 700px) { align-items: flex-end; padding: 0; }
 `;
 
 const Modal = styled.section`
@@ -148,6 +181,11 @@ const Modal = styled.section`
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
+
+  @media (max-width: 700px) {
+    width: 100%; max-height: calc(100dvh - env(safe-area-inset-top));
+    padding: 16px; border-radius: 14px 14px 0 0;
+  }
 `;
 
 const ModalHeader = styled.header`
@@ -175,6 +213,8 @@ const Details = styled.dl`
 
   dt { color: var(--text-muted); font-size: 12px; font-weight: 700; }
   dd { margin: 0; overflow-wrap: anywhere; font-size: 13px; }
+
+  @media (max-width: 520px) { grid-template-columns: 1fr; gap: 4px; dd { margin-bottom: 8px; } }
 `;
 
 const Raw = styled.pre`
@@ -245,11 +285,11 @@ function EventQueue() {
                 {filtered.map((event) => (
                   <Row key={event.command_uuid || event._id?.$oid} onClick={() => setSelected(event)}>
                     <Td><span className={MDMIcons[event.eventicon]} /></Td>
-                    <Td><strong>{eventRequestType(event)}</strong></Td>
-                    <Td><Pill $ok={event.status === "Acknowledged"}>{event.status || "Queued"}</Pill></Td>
-                    <Td>{event.udid || "—"}</Td>
-                    <Td>{event.created_at ? new Date(event.created_at * 1000).toLocaleString() : "—"}</Td>
-                    <Td><Mono>{event.command_uuid || "—"}</Mono></Td>
+                    <Td data-label="Command"><strong>{eventRequestType(event)}</strong></Td>
+                    <Td data-label="Status"><Pill $ok={event.status === "Acknowledged"}>{event.status || "Queued"}</Pill></Td>
+                    <Td data-label="Device">{event.udid || "—"}</Td>
+                    <Td data-label="Created">{event.created_at ? new Date(event.created_at * 1000).toLocaleString() : "—"}</Td>
+                    <Td data-label="UUID"><Mono>{event.command_uuid || "—"}</Mono></Td>
                   </Row>
                 ))}
               </tbody>

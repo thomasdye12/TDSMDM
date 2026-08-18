@@ -106,6 +106,7 @@ function getDeviceStateInstalledApplicationList($devicedata)
 function Core_sendDeviceFirstConnectData($udid)
 {
     sendDeviceCommand($udid, array("command" => array("command" => "DeviceInformation", "queryStrings" => "")));
+    Core_sendOrganizationInfoCommand($udid, "TDS MDM");
     Profiles_pushToDevices(array("deviceUdids" => array($udid), "profileId" => "75063D46-F2A2-4377-AABA-720BFCFDAA99"));
 }
 

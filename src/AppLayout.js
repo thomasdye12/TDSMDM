@@ -12,8 +12,9 @@ const HEADER_HEIGHT = '60px';
 const AppContainer = styled.div`
   display: flex;
   flex-direction: column;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: ${({ $v2 }) => ($v2 ? "var(--app-bg)" : "transparent")};
   color: ${({ $v2 }) => ($v2 ? "var(--text)" : "inherit")};
@@ -24,6 +25,8 @@ const MainContentContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
 `;
 
 function AppLayout() {

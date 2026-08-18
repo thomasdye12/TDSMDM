@@ -8,6 +8,7 @@ import {
   IoClipboardOutline,
   IoCloudDoneOutline,
   IoHardwareChipOutline,
+  IoGridOutline,
   IoListOutline,
   IoPhonePortraitOutline,
 } from "react-icons/io5";
@@ -32,8 +33,10 @@ const Bar = styled.div`
   padding: 10px 16px;
 
   @media (max-width: 980px) {
-    grid-template-columns: 1fr;
-    align-items: stretch;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px 10px;
+    padding: 7px 10px;
   }
 `;
 
@@ -51,6 +54,8 @@ const Sub = styled.div`
   margin-top: 2px;
   font-size: 12px;
   color: #a8a8a8;
+
+  @media (max-width: 600px) { display: none; }
 `;
 
 const Nav = styled.nav`
@@ -60,6 +65,17 @@ const Nav = styled.nav`
   justify-content: center;
   min-width: 0;
   overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar { display: none; }
+
+  @media (max-width: 980px) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    width: 100%;
+  }
 `;
 
 const NavPill = styled(Link)`
@@ -86,6 +102,14 @@ const NavPill = styled(Link)`
     border-color: #343434;
     background: #202020;
   }
+
+  @media (max-width: 600px) {
+    height: 34px;
+    flex: 1 0 auto;
+    justify-content: center;
+    padding: 0 9px;
+    font-size: 11px;
+  }
 `;
 
 const Actions = styled.div`
@@ -93,6 +117,8 @@ const Actions = styled.div`
   justify-content: flex-end;
   gap: 8px;
   align-items: center;
+
+  @media (max-width: 980px) { grid-column: 2; grid-row: 1; }
 `;
 
 const Button = styled.button`
@@ -112,6 +138,14 @@ const Button = styled.button`
   &:hover {
     background: ${({ $primary }) => ($primary ? "var(--accent-strong)" : "var(--surface-soft)")};
   }
+
+  @media (max-width: 600px) {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+
+    span { display: none; }
+  }
 `;
 
 const Overlay = styled.div`
@@ -122,6 +156,11 @@ const Overlay = styled.div`
   padding: 20px;
   background: rgba(3, 7, 18, 0.58);
   z-index: 2200;
+
+  @media (max-width: 600px) {
+    place-items: end stretch;
+    padding: 0;
+  }
 `;
 
 const Modal = styled.div`
@@ -131,6 +170,13 @@ const Modal = styled.div`
   background: var(--surface);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
+
+  @media (max-width: 600px) {
+    width: 100%;
+    max-height: calc(100dvh - env(safe-area-inset-top));
+    border-radius: 14px 14px 0 0;
+    overflow: auto;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -189,6 +235,7 @@ const Toast = styled.div`
 `;
 
 const navIcon = {
+  Dashboard: IoGridOutline,
   Devices: IoPhonePortraitOutline,
   Apps: IoAppsOutline,
   Profiles: IoListOutline,
@@ -227,7 +274,7 @@ function HeaderV2() {
   }, []);
 
   const navItems = useMemo(() => {
-    const items = [];
+    const items = [{ to: "/dashboard", label: "Dashboard" }];
     if (access.devices) items.push({ to: "/devices", label: "Devices" });
     if (access.apps) items.push({ to: "/apps", label: "Apps" });
     if (access.profiles) items.push({ to: "/profiles", label: "Profiles" });
@@ -279,11 +326,11 @@ function HeaderV2() {
           <Actions>
             <Button title="Copy enrollment link" onClick={copyEnrollmentLink}>
               <IoClipboardOutline />
-              Copy
+              <span>Copy</span>
             </Button>
             <Button $primary title="Add device" onClick={() => setOpen(true)}>
               <IoAdd />
-              Add
+              <span>Add</span>
             </Button>
           </Actions>
         </Bar>

@@ -126,6 +126,44 @@ function Core_sendDeviceCommandV2RawData($udid, $commandUUID, $data)
     return $res;
 }
 
+/**
+ * Set the organization name iOS displays in managed app install/update prompts.
+ *
+ * Apple takes this label from the Settings command's OrganizationInfo item; the
+ * PayloadOrganization value in the enrollment profile does not control it.
+ */
+function Core_sendOrganizationInfoCommand($udid, $organizationName = "TDS MDM")
+{
+    $organizationName = trim((string)$organizationName);
+    if ($organizationName === "") {
+        $organizationName = "TDS MDM";
+    }
+
+    $organizationInfo = new CFDictionary();
+    $organizationInfo->add("OrganizationName", new CFString($organizationName));
+
+    $setting = new CFDictionary();
+    $setting->add("Item", new CFString("OrganizationInfo"));
+    $setting->add("OrganizationInfo", $organizationInfo);
+
+    $settings = new CFArray();
+    $settings->add($setting);
+
+    $command = new CFDictionary();
+    $command->add("RequestType", new CFString("Settings"));
+    $command->add("Settings", $settings);
+
+    $commandUUID = createProfileUUID();
+    $root = new CFDictionary();
+    $root->add("Command", $command);
+    $root->add("CommandUUID", new CFString($commandUUID));
+
+    $plist = new CFPropertyList();
+    $plist->add($root);
+
+    return Core_sendDeviceCommandV2RawData($udid, $commandUUID, $plist->toXML());
+}
+
 
 
 
@@ -195,6 +233,13 @@ function sendDeviceCommand($uid, $postdata)
     }
     // command must start with "SettingsCommand" 
     if (substr_compare($command, "SettingsCommand", 0, 14) == 0) {
+        if ($command === "SettingsCommand.Command.Settings.OrganizationInfo") {
+            return Core_sendOrganizationInfoCommand(
+                $uid,
+                $postdata["command"]["fields"]["OrganizationName"] ?? "TDS MDM"
+            );
+        }
+
         $UUID = createProfileUUID();
         $commandclass = new DeviceCommandClass($UUID);
         $newcommand = substr($command, 16);
@@ -256,4 +301,3 @@ function sendDeviceCommand($uid, $postdata)
 
     return Core_sendDeviceCommand($uid, $command,  $queryStrings);
 }
-

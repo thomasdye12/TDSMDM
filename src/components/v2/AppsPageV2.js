@@ -36,6 +36,8 @@ const Page = styled.div`
   background: var(--app-bg);
   color: var(--text);
   padding: 16px;
+
+  @media (max-width: 600px) { padding: 10px; }
 `;
 
 const Shell = styled.div`
@@ -316,6 +318,8 @@ const Overlay = styled.div`
   padding: 18px;
   background: rgba(3, 7, 18, 0.58);
   z-index: 2200;
+
+  @media (max-width: 600px) { place-items: end stretch; padding: 0; }
 `;
 
 const Modal = styled.div`
@@ -328,6 +332,12 @@ const Modal = styled.div`
   border-radius: 10px;
   background: var(--surface);
   box-shadow: var(--shadow-soft);
+
+  @media (max-width: 600px) {
+    width: 100%;
+    max-height: calc(100dvh - env(safe-area-inset-top));
+    border-radius: 14px 14px 0 0;
+  }
 `;
 
 const ModalHeader = styled.div`

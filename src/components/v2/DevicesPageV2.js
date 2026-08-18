@@ -5,6 +5,7 @@ import styled from "styled-components";
 import {
   IoBatteryHalfOutline,
   IoCheckmarkCircle,
+  IoChevronBack,
   IoChevronForward,
   IoInformationCircleOutline,
   IoLocateOutline,
@@ -32,7 +33,9 @@ const Page = styled.div`
   color: var(--text);
 
   @media (max-width: 980px) {
-    grid-template-columns: 1fr;
+    display: block;
+    height: 100%;
+    overflow: hidden;
   }
 `;
 
@@ -44,15 +47,18 @@ const Sidebar = styled.aside`
   background: var(--surface);
 
   @media (max-width: 980px) {
-    max-height: 48vh;
+    display: ${({ $hiddenMobile }) => ($hiddenMobile ? "none" : "flex")};
+    height: 100%;
+    max-height: none;
     border-right: 0;
-    border-bottom: 1px solid var(--border);
   }
 `;
 
 const SidebarTop = styled.div`
   padding: 14px;
   border-bottom: 1px solid var(--border);
+
+  @media (max-width: 600px) { padding: 10px; }
 `;
 
 const Workspace = styled.main`
@@ -60,6 +66,30 @@ const Workspace = styled.main`
   min-height: 0;
   overflow: auto;
   padding: 16px;
+
+  @media (max-width: 980px) {
+    display: ${({ $hiddenMobile }) => ($hiddenMobile ? "none" : "block")};
+    height: 100%;
+    padding: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+`;
+
+const MobileBack = styled.button`
+  display: none;
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 10px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-weight: 850;
+
+  @media (max-width: 980px) { display: flex; }
 `;
 
 const TitleRow = styled.div`
@@ -267,10 +297,17 @@ const CardHeader = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+
+  @media (max-width: 700px) {
+    display: grid;
+    padding: 12px;
+  }
 `;
 
 const CardBody = styled.div`
   padding: 14px;
+
+  @media (max-width: 600px) { padding: 10px; }
 `;
 
 const Hero = styled(Card)`
@@ -286,6 +323,7 @@ const HeroBody = styled.div`
 
   @media (max-width: 780px) {
     grid-template-columns: 1fr;
+    padding: 12px;
   }
 `;
 
@@ -325,6 +363,8 @@ const Button = styled.button`
   &:hover {
     background: ${({ $primary }) => ($primary ? "var(--accent-strong)" : "var(--surface-soft)")};
   }
+
+  @media (max-width: 600px) { min-height: 44px; }
 `;
 
 const DetailGrid = styled.div`
@@ -374,6 +414,9 @@ const Tabs = styled.div`
   display: flex;
   gap: 6px;
   overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  &::-webkit-scrollbar { display: none; }
 `;
 
 const Tab = styled.button`
@@ -387,6 +430,8 @@ const Tab = styled.button`
   font-size: 12px;
   white-space: nowrap;
   cursor: pointer;
+
+  @media (max-width: 600px) { height: 42px; }
 `;
 
 const Empty = styled.div`
@@ -430,6 +475,8 @@ const CommandGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+
+  @media (max-width: 440px) { grid-template-columns: 1fr; }
 `;
 
 const AppList = styled.div`
@@ -726,7 +773,7 @@ function DevicesPageV2() {
 
   return (
     <Page>
-      <Sidebar>
+      <Sidebar $hiddenMobile={!!udid}>
         <SidebarTop>
           <TitleRow>
             <div>
@@ -788,7 +835,12 @@ function DevicesPageV2() {
         </DeviceList>
       </Sidebar>
 
-      <Workspace>
+      <Workspace $hiddenMobile={!udid}>
+        {udid ? (
+          <MobileBack type="button" onClick={() => navigate("/devices")}>
+            <IoChevronBack /> Back to devices
+          </MobileBack>
+        ) : null}
         {!udid ? (
           <Empty>
             <IoInformationCircleOutline size={26} />

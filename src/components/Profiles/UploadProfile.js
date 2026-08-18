@@ -11,6 +11,14 @@ const UploadContainer = styled.div`
   padding: 10px 20px;
   border-radius: 8px;
   border: 1px solid var(--border);
+
+  @media (max-width: 700px) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 8px;
+    > * { min-width: 0; text-align: center; }
+  }
 `;
 
 const FileInput = styled.input`
@@ -24,6 +32,11 @@ const UploadLabel = styled.label`
   background-color: var(--accent);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 700px) { min-height: 44px; display: grid; place-items: center; padding: 8px; }
 
   &:hover {
     background-color: var(--accent-hover);

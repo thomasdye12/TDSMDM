@@ -10,6 +10,12 @@ const UploadContainer = styled.div`
   padding: 10px 20px;
   border-radius: 8px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 600px) {
+    width: 100%;
+    padding: 8px;
+    > * { flex: 1 1 0; min-width: 0; text-align: center; }
+  }
 `;
 
 const FileInput = styled.input`
@@ -24,6 +30,11 @@ const UploadLabel = styled.label`
   border-radius: 4px;
   cursor: pointer;
   margin-right: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 600px) { margin-right: 0; min-height: 44px; display: grid; place-items: center; }
 
   &:hover {
     background-color: #0056b3;

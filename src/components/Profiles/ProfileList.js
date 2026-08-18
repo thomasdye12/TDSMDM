@@ -24,6 +24,8 @@ const Page = styled.div`
   min-height: 100vh;
   background: var(--surface-muted);
   padding: 22px;
+
+  @media (max-width: 700px) { min-height: 100%; padding: 10px; }
 `;
 
 const Card = styled.div`
@@ -42,6 +44,12 @@ const TopBar = styled.div`
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
+
+  @media (max-width: 700px) {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px;
+  }
 `;
 
 const Left = styled.div`
@@ -49,6 +57,8 @@ const Left = styled.div`
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 700px) { display: grid; }
 `;
 
 const Title = styled.div`
@@ -79,10 +89,14 @@ const Search = styled.input`
     border-color: var(--accent);
     box-shadow: var(--focus-ring);
   }
+
+  @media (max-width: 700px) { width: 100%; max-width: none; }
 `;
 
 const TableWrap = styled.div`
   overflow: auto;
+
+  @media (max-width: 700px) { overflow: visible; }
 `;
 
 const Table = styled.table`
@@ -90,12 +104,21 @@ const Table = styled.table`
   border-collapse: separate;
   border-spacing: 0;
   min-width: 980px;
+
+  @media (max-width: 700px) {
+    display: block;
+    min-width: 0;
+    padding: 10px;
+    tbody { display: grid; gap: 10px; }
+  }
 `;
 
 const Thead = styled.thead`
   position: sticky;
   top: 0;
   z-index: 5;
+
+  @media (max-width: 700px) { display: none; }
 `;
 
 const Th = styled.th`
@@ -127,6 +150,8 @@ const Overlay = styled.div`
   justify-content: center;
   z-index: 2000;
   padding: 20px;
+
+  @media (max-width: 700px) { align-items: flex-end; padding: 0; }
 `;
 
 const Modal = styled.div`
@@ -135,6 +160,13 @@ const Modal = styled.div`
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 22px 70px rgba(0,0,0,0.35);
+
+  @media (max-width: 700px) {
+    width: 100%;
+    max-height: calc(100dvh - env(safe-area-inset-top));
+    overflow: auto;
+    border-radius: 14px 14px 0 0;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -167,6 +199,7 @@ const ModalBody = styled.div`
 
   @media (max-width: 880px) {
     grid-template-columns: 1fr;
+    min-height: 0;
   }
 `;
 
@@ -282,6 +315,7 @@ const ActionRow = styled.div`
   display: flex;
   gap: 10px;
   margin-top: 12px;
+  flex-wrap: wrap;
 `;
 
 const PrimaryBtn = styled.button`
@@ -469,7 +503,6 @@ function ProfileList() {
             <Thead>
               <tr>
                 <Th>Profile</Th>
-                <Th>UUID</Th>
                 <Th>Installed on</Th>
                 <Th style={{ width: 220, textAlign: "right" }}>Actions</Th>
               </tr>
@@ -477,7 +510,7 @@ function ProfileList() {
             <tbody>
               {filteredProfiles.length === 0 ? (
                 <tr>
-                  <td colSpan={4}>
+                  <td colSpan={3}>
                     <Empty>No profiles match your search.</Empty>
                   </td>
                 </tr>

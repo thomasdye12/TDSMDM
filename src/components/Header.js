@@ -239,7 +239,7 @@ function Header() {
   }, []);
 
   const navItems = useMemo(() => {
-    const items = [];
+    const items = [{ to: "/dashboard", label: "Dashboard" }];
     if (access.devices) items.push({ to: "/devices", label: "Devices" });
     if (access.apps) items.push({ to: "/apps", label: "Apps" });
     if (access.profiles) items.push({ to: "/profiles", label: "Profiles" });

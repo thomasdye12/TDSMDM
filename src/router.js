@@ -17,6 +17,7 @@ import ProfileEdit from './components/Profiles/edit/ProfileEdit';
 import DDMDashboard from './components/ddm/DDMDashboard';
 import DevicesPageV2 from './components/v2/DevicesPageV2';
 import AppsPageV2 from './components/v2/AppsPageV2';
+import DashboardPage from './components/dashboard/DashboardPage';
 import { isV2UiEnabled } from './utils/featureFlags';
 
 function DevicesRoute() {
@@ -41,7 +42,8 @@ function AppsRoute() {
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<AppLayout />}>
-      <Route index element={<Navigate to="/devices" replace />} />
+      <Route index element={<Navigate to="/dashboard" replace />} />
+      <Route path="dashboard" element={<DashboardPage />} />
       <Route path="devices" element={<DevicesRoute />} />
       <Route path="devices/:udid" element={<DeviceDetailsRoute />} />
       <Route path="apps" element={<AppsRoute />} />

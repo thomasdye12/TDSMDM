@@ -49,6 +49,7 @@ class JsonToPlistConverter
             'loginWindowSettings' => ['isArray' => false, "PayloadType" => "com.apple.loginwindow"],
             'sharedDeviceSettings' => ['isArray' => false, "PayloadType" => "com.apple.shareddeviceconfiguration"],
             'restrictionsSettings' => ['isArray' => false, "PayloadType" => "com.apple.applicationaccess"],
+            'homeScreenLayoutSettings' => ['isArray' => false, "PayloadType" => "com.apple.homescreenlayout"],
             'singleAppModeSettings' => ['isArray' => false, "PayloadType" => "com.apple.app.lock"],
         ];
 

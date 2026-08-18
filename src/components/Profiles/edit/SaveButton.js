@@ -13,9 +13,19 @@ const Button = styled.button`
   border: 1px solid var(--accent);
   border-radius: 8px;
   cursor: pointer;
+  z-index: 100;
 
   &:hover {
     background: var(--accent-strong);
+  }
+
+  @media (max-width: 800px) {
+    left: 10px;
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: auto;
+    min-height: 50px;
+    box-shadow: var(--shadow-lg);
   }
 `;
 

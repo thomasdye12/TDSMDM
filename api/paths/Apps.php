@@ -976,6 +976,16 @@ function Apps_pushToDevice($appid, $app, $deviceid)
         }
     }
 
+    // iOS uses OrganizationInfo for the name shown in the managed app prompt.
+    // Queue it directly before the install so existing devices also pick up the
+    // TDS MDM name without needing to be re-enrolled.
+    $organizationResult = Core_sendOrganizationInfoCommand($deviceid, "TDS MDM");
+    if (isset($organizationResult["error"])) {
+        return [
+            "error" => "Could not set the managed app prompt name: " . $organizationResult["error"],
+        ];
+    }
+
     $url = "https://".$GLOBALS["hostName"]."/TDSapi/v1/system/apps/download/" . $appid;
     $installSettings = Apps_normalizeInstallSettings($app["installSettings"] ?? null);
     $device = $targetDevice;
